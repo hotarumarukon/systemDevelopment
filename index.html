@@ -351,4 +351,102 @@
 })();
 </script>
 
+<script>
+(function(){
+const jAbelImg="data:image/webp;base64,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";
+const jFallenLuciferImg="data:image/webp;base64,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";
+try{if(typeof window!=="undefined"&&window.__AZR_IMG_DATA__){window.__AZR_IMG_DATA__["IMG:abel"]=jAbelImg;window.__AZR_IMG_DATA__["IMG:fallen_lucifer"]=jFallenLuciferImg;}}catch(_){}
+try{if(typeof P==="object"&&P){if(!P["IMG:abel"])P["IMG:abel"]=new Image();P["IMG:abel"].src=jAbelImg;if(!P["IMG:fallen_lucifer"])P["IMG:fallen_lucifer"]=new Image();P["IMG:fallen_lucifer"].src=jFallenLuciferImg;}}catch(_){}
+
+try{Object.assign(R,{closest_lockon_laser:"近敵超絶ロックオンレーザー",hi_energy_circle:"ハイエナジーサークル",defense_down_blast:"超絶防御ダウンブラスト"});}catch(_){}
+try{Object.assign(U,{closest_lockon_laser:"近くの敵をロックオンし壁まで貫通する横幅40pxの超絶レーザーを放つ",hi_energy_circle:"画面全体に広がるハイエナジーサークル(ボスには10倍ダメージ)",defense_down_blast:"自分中心200x200pxの範囲にブラストを放ち、範囲内の敵の受けるダメージを2ターン1.2倍にする"});}catch(_){}
+try{Object.assign(G,{friendship_boost_turns:"4ターンの間、自身の友情威力が2倍",touch_all_weaken:"ふれた全ての敵に25%割合&受けるダメージを3倍(2ターン)"});}catch(_){}
+
+const abelCharacter={id:462,name:"アベル",icon:"IMG:abel",element:"light",rarity:6,hp:22210,atk:23300,spd:510,shotType:"pierce",ssName:"絆の共鳴",ssDesc:"4ターンの間、自身の友情威力が2倍になる",ssTurns:8,ssType:"friendship_boost_turns",ssBoostTurns:4,ssBoostMultiplier:2,bumpType:"closest_lockon_laser",bumpName:"超絶レーザー",bumpPower:10000000,bumpDesc:"近くの敵をロックオンする超絶レーザー",bumpSpec:"近くの敵をロックオンして壁まで貫通するレーザー(横幅40px)",subBumpType:"laser16",subBumpName:"アベル16方向レーザー(重複判定あり)",subBumpPower:845000,subBumpDesc:"16方向にアベル級レーザーを放つ",abi:"アンチ重力バリア / アンチブロック / アンチ減速壁 / アンチ減速床 / 闇キラー / 回復M(HP40%回復)",abiDesc:"重力バリア・ブロック・減速壁・減速床を無効化 / 闇属性の敵に1.5倍ダメージ / 移動後にHP40%回復",lore:"光の絆を司る始原の兄。超絶の連携と16方向の光刃で戦場を制する。限定キャラ。",limited:true,secret:true};
+
+const fallenLuciferCharacter={id:463,name:"堕天使ルシフェル",icon:"IMG:fallen_lucifer",element:"dark",rarity:6,hp:26800,atk:34600,spd:320,shotType:"reflect",ssName:"堕天の烙印",ssDesc:"ふれた敵全てに25%割合&その敵の受けるダメージを3倍にする",ssTurns:20,ssType:"touch_all_weaken",ssPercentDamage:.25,ssWeakenMultiplier:3,ssWeakenTurns:2,bumpType:"hi_energy_circle",bumpName:"ハイエナジーサークル",bumpPower:1000000,bumpDesc:"ハイエナジーサークルで敵を攻撃",bumpSpec:"画面全体に広がるエナジーサークル(ボスには10倍のダメージが入る)",subBumpType:"defense_down_blast",subBumpName:"超絶防御ダウンブラスト",subBumpPower:1000000,subBumpDesc:"自分を中心に防御を下げるブラストを放つ",subBumpSpec:"自分中心円範囲200x200px、範囲内の敵は2ターン間受ダメージ1.2倍",abi:"アンチダメージウォール / アンチ減速床 / ルシフェルバリア / 全属性キラーEL",abiDesc:"DW・減速床を無効化 / 10000耐久の特殊バリア(各マップ張り直し・1度だけ全ダメージ無効化) / 全属性に3倍ダメージ",lore:"光を背き落ちた大天使。堕天の烙印で全てを受ける側に歪ませる。限定キャラ。",limited:true,secret:true};
+
+try{if(typeof ALL_MONSTERS!=="undefined"&&Array.isArray(ALL_MONSTERS)){[abelCharacter,fallenLuciferCharacter].forEach(mon=>{if(!ALL_MONSTERS.some(x=>x&&x.id===mon.id))ALL_MONSTERS.push(mon);});}}catch(_){}
+
+try{if(typeof SECRET_WORDS==="object"&&SECRET_WORDS){SECRET_WORDS["アベル光絶"]={id:462,fallbackName:"アベル",banner:"rgba(255,220,120,.55)"};SECRET_WORDS["堕天使ルシフェル"]={id:463,fallbackName:"堕天使ルシフェル",banner:"rgba(140,40,200,.55)"};}}catch(_){}
+
+function aluApplyFriendDamage(owner,enemy,baseDamage,flash,fxColor){if(typeof applyFriendDamage==="function")return applyFriendDamage(owner,enemy,baseDamage,flash,fxColor);return 0;}
+function aluFinishFriendship(owner,depth,color){if(typeof finishFriendship==="function")return finishFriendship(owner,depth,color);}
+function aluSegDistSq(px,py,ax,ay,bx,by){if(typeof pointToSegmentDistanceSq==="function")return pointToSegmentDistanceSq(px,py,ax,ay,bx,by);const dx=bx-ax,dy=by-ay,l2=dx*dx+dy*dy;if(l2<1e-6)return(px-ax)*(px-ax)+(py-ay)*(py-ay);let t=((px-ax)*dx+(py-ay)*dy)/l2;t=Math.max(0,Math.min(1,t));const cx=ax+t*dx,cy=ay+t*dy;return(px-cx)*(px-cx)+(py-cy)*(py-cy);}
+function aluReachWall(x,y,angle){if(typeof Se==="function")return Se(x,y,angle,8);return 800;}
+
+const __aluOrigFe=typeof Fe==="function"?Fe:null;
+if(__aluOrigFe)Fe=function(owner,depth){depth=depth||0;if(!game||!owner||depth>2)return __aluOrigFe(owner,depth);const enemies=(game.enemies||[]).filter(e=>e.alive);const color=(typeof W!=="undefined"&&W[owner.element])||"#ffffff";switch(owner.bumpType){
+case"closest_lockon_laser":{try{D("cross_laser")}catch(_){}
+try{_e(owner.x,owner.y,color,16)}catch(_){}
+if(!enemies.length){aluFinishFriendship(owner,depth,color);return;}
+let closest=null,minDist=Infinity;enemies.forEach(e=>{const d=Math.hypot(e.x-owner.x,e.y-owner.y);if(d<minDist){minDist=d;closest=e;}});
+if(!closest){aluFinishFriendship(owner,depth,color);return;}
+const aimAngle=Math.atan2(closest.y-owner.y,closest.x-owner.x);
+const reach=aluReachWall(owner.x,owner.y,aimAngle);
+const tx=owner.x+Math.cos(aimAngle)*reach;
+const ty=owner.y+Math.sin(aimAngle)*reach;
+const width=40;
+game.friendshipEffects.push({type:"luminous_beam",ax:owner.x,ay:owner.y,bx:tx,by:ty,damage:owner.bumpPower*(owner._friendshipBoost||1),color:color,element:owner.element,life:.75,width:width,_sourceAbi:owner.abi});
+(game.enemies||[]).forEach(e=>{if(!e.alive)return;const r=e.radius+width/2;if(aluSegDistSq(e.x,e.y,owner.x,owner.y,tx,ty)<=r*r){aluApplyFriendDamage(owner,e,owner.bumpPower,.2,color);}});
+game.shakeTimer=Math.max(game.shakeTimer||0,.32);game.shakeIntensity=Math.max(game.shakeIntensity||0,7);
+aluFinishFriendship(owner,depth,color);return;}
+case"hi_energy_circle":{try{D("cross_laser")}catch(_){}
+const J=Math.max(owner.x-game.field.left,game.field.right-owner.x);
+const L=Math.max(owner.y-game.field.top,game.field.bottom-owner.y);
+const maxR=Math.hypot(J,L)+24;
+game.friendshipEffects.push({type:"fullscreen_circle",x:owner.x,y:owner.y,radius:0,maxRadius:maxR,damage:owner.bumpPower*(owner._friendshipBoost||1),color:color,element:owner.element,life:.85,hitEnemies:new Set(),_sourceAbi:owner.abi});
+(game.enemies||[]).forEach(e=>{if(e.alive&&e.isBoss){const extra=owner.bumpPower*9*(owner._friendshipBoost||1);aluApplyFriendDamage(owner,e,extra,.25,"#ffcc88");}});
+game.shakeTimer=Math.max(game.shakeTimer||0,.35);game.shakeIntensity=Math.max(game.shakeIntensity||0,7);
+aluFinishFriendship(owner,depth,color);return;}
+case"defense_down_blast":{try{D("cross_laser")}catch(_){}
+const radius=100;
+game.friendshipEffects.push({type:"energy_circle",x:owner.x,y:owner.y,radius:radius,maxRadius:radius,damage:owner.bumpPower*(owner._friendshipBoost||1),color:color,element:owner.element,life:.6,hitEnemies:new Set(),_sourceAbi:owner.abi});
+(game.enemies||[]).forEach(e=>{if(!e.alive)return;if(Math.hypot(e.x-owner.x,e.y-owner.y)<=radius+e.radius){e._weakenTurns=Math.max(e._weakenTurns||0,2);e._weakenMul=Math.max(e._weakenMul||1,1.2);aluApplyFriendDamage(owner,e,owner.bumpPower,.16,color);}});
+game.shakeTimer=Math.max(game.shakeTimer||0,.22);game.shakeIntensity=Math.max(game.shakeIntensity||0,5);
+aluFinishFriendship(owner,depth,color);return;}
+default:return __aluOrigFe(owner,depth);}};
+
+const __aluOrigXe=typeof Xe==="function"?Xe:null;
+if(__aluOrigXe)Xe=function(ch){if(!game||!ch)return __aluOrigXe(ch);switch(ch.ssType){
+case"friendship_boost_turns":{ch._friendshipBoost=ch.ssBoostMultiplier||2;ch._friendshipBoostTurns=ch.ssBoostTurns||4;try{D("item")}catch(_){}
+try{_e(ch.x,ch.y,"#66e0ff",24)}catch(_){}
+game.shakeTimer=Math.max(game.shakeTimer||0,.22);game.shakeIntensity=Math.max(game.shakeIntensity||0,5);return;}
+case"touch_all_weaken":{ch._touchAllWeakenActive=true;ch._touchAllWeakenSet=new Set();try{_e(ch.x,ch.y,"#c08dff",24)}catch(_){}
+game.shakeTimer=Math.max(game.shakeTimer||0,.25);game.shakeIntensity=Math.max(game.shakeIntensity||0,6);return;}
+default:return __aluOrigXe(ch);}};
+
+const __aluOrigNt=typeof nt==="function"?nt:null;
+if(__aluOrigNt)nt=function(attacker,target,a,s,i){const dmg=__aluOrigNt.apply(this,arguments);try{if(game&&game.ssActive&&attacker===game.chars[game.currentCharIdx]&&attacker.ssType==="touch_all_weaken"&&attacker._touchAllWeakenActive&&target&&target.alive){if(!attacker._touchAllWeakenSet)attacker._touchAllWeakenSet=new Set();if(!attacker._touchAllWeakenSet.has(target)){attacker._touchAllWeakenSet.add(target);const ratio=attacker.ssPercentDamage||.25;const pd=Math.max(1,Math.floor(ratio*target.maxHP));target.currentHP-=pd;if(game.totalDamage!==void 0)game.totalDamage+=pd;if(game.comboDmg!==void 0)game.comboDmg+=pd;if(typeof $e==="function")$e(target.x,target.y-target.radius-14,pd,attacker.element||"dark");if(typeof _e==="function")_e(target.x,target.y,"#c08dff",12);target._weakenMul=Math.max(target._weakenMul||1,attacker.ssWeakenMultiplier||3);target._weakenTurns=Math.max(target._weakenTurns||0,attacker.ssWeakenTurns||2);if(target.currentHP<=0){target.alive=false;try{D("kill")}catch(_){}
+try{_e(target.x,target.y,W[target.element],16)}catch(_){}}}}}catch(_){}
+return dmg;};
+
+const __aluOrigTSAM=typeof targetStateAbiMultiplier==="function"?targetStateAbiMultiplier:null;
+if(__aluOrigTSAM)targetStateAbiMultiplier=function(owner,target){let m=__aluOrigTSAM(owner,target);if(target&&target._weakenTurns>0&&target._weakenMul>1)m*=target._weakenMul;return m;};
+
+const __aluOrigGe=typeof Ge==="function"?Ge:null;
+if(__aluOrigGe)Ge=function(e,t,a){if(game&&e&&t>0&&e._luciferBarrierHP&&e._luciferBarrierHP>0){e._luciferBarrierHP=Math.max(0,e._luciferBarrierHP-t);try{_e(e.x,e.y,"#c8a0ff",12)}catch(_){}
+return;}
+return __aluOrigGe.call(this,e,t,a);};
+
+const __aluOrigxe=typeof xe==="function"?xe:null;
+if(__aluOrigxe)xe=function(){const r=__aluOrigxe.apply(this,arguments);try{if(game&&game.chars){game.chars.forEach(ch=>{if(ch&&ch.abi&&ch.abi.includes("ルシフェルバリア")){ch._luciferBarrierHP=10000;ch._luciferBarrierMaxHP=10000;}});}}catch(_){}
+return r;};
+
+const __aluOrigLe=typeof Le==="function"?Le:null;
+if(__aluOrigLe)Le=function(){const r=__aluOrigLe.apply(this,arguments);try{if(game&&game.chars){game.chars.forEach(ch=>{if(ch&&ch._friendshipBoostTurns>0){ch._friendshipBoostTurns--;if(ch._friendshipBoostTurns<=0){ch._friendshipBoostTurns=0;ch._friendshipBoost=void 0;}}});}
+if(game&&game.enemies){game.enemies.forEach(e=>{if(e&&e._weakenTurns>0){e._weakenTurns--;if(e._weakenTurns<=0){e._weakenTurns=0;e._weakenMul=1;}}});}}catch(_){}
+return r;};
+
+const __aluOrigReset=typeof resetFriendshipBoost==="function"?resetFriendshipBoost:null;
+if(__aluOrigReset)resetFriendshipBoost=function(){try{if(game&&game.chars){const keep=[];game.chars.forEach((ch,idx)=>{if(ch&&ch._friendshipBoostTurns>0)keep.push({idx:idx,boost:ch._friendshipBoost,turns:ch._friendshipBoostTurns});});const r=__aluOrigReset.apply(this,arguments);keep.forEach(k=>{const ch=game.chars[k.idx];if(ch){ch._friendshipBoost=k.boost;ch._friendshipBoostTurns=k.turns;}});return r;}}catch(_){}
+return __aluOrigReset.apply(this,arguments);};
+
+const __aluOrigOe=typeof Oe==="function"?Oe:null;
+if(__aluOrigOe)Oe=function(){const r=__aluOrigOe.apply(this,arguments);try{if(!game||typeof ctx==="undefined"||!ctx)return r;ctx.save();(game.chars||[]).forEach(ch=>{if(!ch||!ch.alive)return;let above=ch.y-ch.radius-16;if(ch._perfectCubeTurns>0)above-=18;if(ch._friendshipBoostTurns>0){ctx.font="16px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#ffffff";ctx.shadowBlur=8;ctx.shadowColor="#66e0ff";ctx.fillText("🤝",ch.x,above);ctx.shadowBlur=0;}
+if(ch._luciferBarrierHP>0){ctx.font="11px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#e0c0ff";ctx.shadowBlur=6;ctx.shadowColor="#c08dff";ctx.fillText("👼"+ch._luciferBarrierHP,ch.x,ch.y+ch.radius+10);ctx.shadowBlur=0;}});ctx.restore();}catch(_){}
+return r;};
+
+})();
+</script>
 </html>
