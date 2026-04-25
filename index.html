@@ -55,6 +55,67 @@
     if(!ALL_MONSTERS.some(function(m){return m&&m.id===mon.id;}))ALL_MONSTERS.push(mon);
   });
 
+  // テレンSS: stop at first touched enemy + 5000x normal attack damage
+  try{
+    if(typeof Xe==='function'&&!Xe.__terenWrapped){
+      var origXe=Xe;
+      Xe=function(e){
+        try{
+          if(e&&e.id===1802&&e.ssType==='empty_lot'&&e._emptyLotMarkedEnemy&&e._emptyLotMarkedEnemy.alive&&!e._terenHitDone){
+            e._terenHitDone=true;
+            var target=e._emptyLotMarkedEnemy;
+            var dmg=5000*e.atk;
+            try{if(typeof Q!=='undefined'&&Q[e.element]===target.element)dmg*=1.5;}catch(_){}
+            try{if(typeof Q!=='undefined'&&Q[target.element]===e.element)dmg*=0.7;}catch(_){}
+            try{if(typeof Pe==='function')dmg*=Pe(e,target.element,false,!!target.isBoss);}catch(_){}
+            try{if(typeof targetStateAbiMultiplier==='function')dmg*=targetStateAbiMultiplier(e,target);}catch(_){}
+            dmg=Math.max(1,Math.floor(dmg));
+            target.currentHP-=dmg;
+            game.totalDamage+=dmg;
+            game.comboDmg+=dmg;
+            game.combo++;
+            if(game.combo>game.maxCombo)game.maxCombo=game.combo;
+            try{if(typeof $e==='function')$e(target.x,target.y-target.radius-18,dmg,e.element||'wood');}catch(_){}
+            try{if(typeof _e==='function')_e(target.x,target.y,(typeof W!=='undefined'&&W[e.element])||'#9fffaa',26);}catch(_){}
+            try{game.friendshipEffects&&game.friendshipEffects.push({type:'explosion',x:target.x,y:target.y,radius:90,maxRadius:90,color:(typeof W!=='undefined'&&W[e.element])||'#9fffaa',life:.4,_armed:!1,hitEnemies:new Set});}catch(_){}
+            target.hitFlash=.35;
+            if(target.currentHP<=0){target.alive=false;try{if(typeof D==='function')D('kill');}catch(_){}try{if(typeof _e==='function')_e(target.x,target.y,(typeof W!=='undefined'&&W[target.element])||'#fff',24);}catch(_){}}
+            game.shakeTimer=Math.max(game.shakeTimer||0,.5);
+            game.shakeIntensity=Math.max(game.shakeIntensity||0,12);
+            try{if(typeof D==='function')D('ss');}catch(_){}
+          }
+        }catch(_){}
+        return origXe.apply(this,arguments);
+      };
+      Xe.__terenWrapped=true;
+    }
+    if(typeof Ye==='function'&&!Ye.__terenWrapped){
+      var origYe=Ye;
+      Ye=function(){
+        var ret=origYe.apply(this,arguments);
+        try{
+          var ch=(game&&game.ssActive&&game.chars)?game.chars[game.currentCharIdx]:null;
+          if(ch&&ch.id===1802&&ch.ssType==='empty_lot'&&ch._emptyLotMarkedEnemy&&!ch._terenStopDone){
+            var t=ch._emptyLotMarkedEnemy;
+            if(t){
+              ch.x=t.x;ch.y=t.y;ch.vx=0;ch.vy=0;ch.moving=false;
+              ch._terenStopDone=true;
+              try{if(typeof _e==='function')_e(ch.x,ch.y,(typeof W!=='undefined'&&W[ch.element])||'#9fffaa',22);}catch(_){}
+              game.shakeTimer=Math.max(game.shakeTimer||0,.22);
+              game.shakeIntensity=Math.max(game.shakeIntensity||0,5);
+            }
+          }
+          // Reset stop/hit flags between SSes
+          if(ch&&ch.id===1802&&!game.ssActive&&(ch._terenStopDone||ch._terenHitDone)){
+            ch._terenStopDone=false;ch._terenHitDone=false;
+          }
+        }catch(_){}
+        return ret;
+      };
+      Ye.__terenWrapped=true;
+    }
+  }catch(_){}
+
   // High-drop 揚羽 from 轟絶キー(stage id 95) and 轟絶アピーラー(stage id 96)
   try{
     if(typeof tt==='function'&&!tt.__agehaWrapped){
