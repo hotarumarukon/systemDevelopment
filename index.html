@@ -350,5 +350,264 @@
   }catch(_){}
 })();
 </script>
+<script>
+;(function(){
+  const TAG="neo_shin_test_character_20260425";
+  if(window[TAG])return;
+  window[TAG]=true;
+
+  const NEO_SHIN_ID=462;
+
+  function nsSfx(name){try{if(typeof D==="function")D(name)}catch(_){}}
+  function nsFx(x,y,color,size){try{if(typeof _e==="function")_e(x,y,color,size||10)}catch(_){}}
+  function nsTextColor(el){try{return (typeof W==="object"&&W&&W[el])||"#88ddff"}catch(_){return "#88ddff"}}
+
+  const neoShin={
+    id:NEO_SHIN_ID,
+    name:"ネオ真",
+    icon:"🧝‍♂️",
+    element:"water",
+    rarity:6,
+    hp:28000,
+    atk:20500,
+    spd:330,
+    shotType:"reflect",
+    ssName:"ネオ・トゥルーオーバードライブ",
+    ssDesc:"貫通化&スピード2倍&全ギミック無効化(オールアンチ)&SSショット中の減速率33%軽減",
+    ssTurns:6,
+    ssType:"neo_kai_override",
+    _neoShinSS:!0,
+    bumpType:"high_end_reflection_ring",
+    bumpName:"ハイエンドリフレクションリング",
+    bumpPower:2222222,
+    bumpDesc:"最高性能のリフレクションリングで敵を攻撃",
+    bumpSpec:"リフレクションリングの通常仕様に比べ、壁反射数が増加(反射6→7壁消え)&発射間隔0.1秒、リフレクションリングの投擲速度は4倍",
+    subBumpType:"neo_reflection_ring_shin",
+    subBumpName:"ネオリフレクションリング・真",
+    subBumpPower:10000000,
+    subBumpDesc:"真の力を宿したリフレクションリングで全ての敵を溶かす",
+    subBumpType2:"absorb_reflection_ring",
+    subBumpName2:"アブソーブリフレクションリング",
+    subBumpPower2:0,
+    subBumpDesc2:"アブソーブ式リフレクションリングを放つ",
+    subBumpSpec2:"敵の最大HPの1%のダメージを与えるリング(発射速度・間隔は普通のリフレクションリングと同様)",
+    abi:"ファーストバリア / アンチダメージウォール / 飛行 / アンチ減速壁 / アンチ減速床 / 壁SSターン短縮",
+    abiDesc:"各マップ開始時に1度だけあらゆるダメージを無効化するバリア / DW・地雷を無効化 / 地上ギミックを無効化 / 減速壁・減速床を無効化 / 壁に触れるとSSターンを1短縮",
+    lore:"ネオ系統の頂点に立つ存在。リフレクションリングを極限まで昇華させ、全てを溶かす真の力を宿した水属性の反射使い。配布専用テストキャラ。",
+    limited:!0,
+    testCharacter:!0
+  };
+
+  try{
+    if(typeof ALL_MONSTERS!=="undefined"&&Array.isArray(ALL_MONSTERS)){
+      if(!ALL_MONSTERS.some(m=>m&&m.id===NEO_SHIN_ID))ALL_MONSTERS.push(neoShin);
+    }
+  }catch(_){}
+
+  try{
+    if(typeof R==="object"&&R){
+      R.high_end_reflection_ring="ハイエンドリフレクションリング";
+      R.neo_reflection_ring_shin="ネオリフレクションリング・真";
+      R.absorb_reflection_ring="アブソーブリフレクションリング";
+    }
+    if(typeof U==="object"&&U){
+      U.high_end_reflection_ring="壁反射7回で消滅 / 発射間隔0.1秒 / 投擲速度4倍";
+      U.neo_reflection_ring_shin="真の力を宿したリフレクションリングで全敵を溶かす";
+      U.absorb_reflection_ring="敵の最大HPの1%のダメージを与えるリング";
+    }
+    if(typeof G==="object"&&G){
+      G.neo_shin_override="貫通化&スピード2倍&オールアンチ&減速率33%軽減";
+    }
+  }catch(_){}
+
+  function nsPushHighEndRing(owner){
+    if(!game)return;
+    const ownerIdx=game.chars?game.chars.indexOf(owner):-1;
+    game.ringEmitters=game.ringEmitters||[];
+    game.ringEmitters.push({
+      ownerIdx:owner._baseOwnerIdx!==void 0?owner._baseOwnerIdx:ownerIdx,
+      element:owner.element,
+      bumpPower:owner.bumpPower,
+      lastFireTime:0,
+      interval:100,
+      _highEndRing:!0,
+      _ringSpeed:40,
+      _ringMaxBounces:6,
+      sourceAbi:owner.abi||owner._sourceAbi||"",
+      _sourceAbi:owner.abi||owner._sourceAbi||""
+    });
+    nsSfx("friendship");
+  }
+
+  function nsPushShinRing(owner){
+    if(!game)return;
+    const ownerIdx=game.chars?game.chars.indexOf(owner):-1;
+    game.ringEmitters=game.ringEmitters||[];
+    game.ringEmitters.push({
+      ownerIdx:owner._baseOwnerIdx!==void 0?owner._baseOwnerIdx:ownerIdx,
+      element:owner.element,
+      bumpPower:owner.bumpPower,
+      lastFireTime:0,
+      interval:250,
+      _shinRing:!0,
+      sourceAbi:owner.abi||owner._sourceAbi||"",
+      _sourceAbi:owner.abi||owner._sourceAbi||""
+    });
+    nsSfx("friendship");
+  }
+
+  function nsPushAbsorbRing(owner){
+    if(!game)return;
+    const ownerIdx=game.chars?game.chars.indexOf(owner):-1;
+    game.ringEmitters=game.ringEmitters||[];
+    game.ringEmitters.push({
+      ownerIdx:owner._baseOwnerIdx!==void 0?owner._baseOwnerIdx:ownerIdx,
+      element:owner.element,
+      bumpPower:0,
+      lastFireTime:0,
+      interval:500,
+      _absorbRing:!0,
+      sourceAbi:owner.abi||owner._sourceAbi||"",
+      _sourceAbi:owner.abi||owner._sourceAbi||""
+    });
+    nsSfx("friendship");
+  }
+
+  function nsRunSubBumps(owner,depth){
+    if(!game||!owner||owner._inSubBump||depth>1)return;
+    const idx=owner._baseOwnerIdx!==void 0?owner._baseOwnerIdx:(game.chars?game.chars.indexOf(owner):-1);
+    if(owner.subBumpType&&typeof Fe==="function"){
+      Fe({...owner,bumpType:owner.subBumpType,bumpPower:owner.subBumpPower??owner.bumpPower,_inSubBump:!0,_baseOwnerIdx:idx},depth+1);
+    }
+    if(owner.subBumpType2&&typeof Fe==="function"){
+      Fe({...owner,bumpType:owner.subBumpType2,bumpPower:owner.subBumpPower2??0,_inSubBump:!0,_isSub2:!0,_baseOwnerIdx:idx},depth+1);
+    }
+  }
+
+  const nsPrevFe=typeof Fe==="function"?Fe:null;
+  Fe=function(owner,depth){
+    depth=depth||0;
+    if(game&&owner){
+      if(owner.bumpType==="high_end_reflection_ring"){nsPushHighEndRing(owner);nsRunSubBumps(owner,depth);return}
+      if(owner.bumpType==="neo_reflection_ring_shin"){nsPushShinRing(owner);nsRunSubBumps(owner,depth);return}
+      if(owner.bumpType==="absorb_reflection_ring"){nsPushAbsorbRing(owner);nsRunSubBumps(owner,depth);return}
+    }
+    if(nsPrevFe)return nsPrevFe.apply(this,arguments);
+  };
+
+  const nsPrevYe=typeof Ye==="function"?Ye:null;
+  Ye=function(){
+    const result=nsPrevYe?nsPrevYe.apply(this,arguments):void 0;
+    try{
+      if(!game||!game.friendshipEffects)return result;
+      const emitters=game.ringEmitters||[];
+      game.friendshipEffects.forEach(eff=>{
+        if(!eff||eff.type!=="reflection_ring"||eff._nsTagged)return;
+        for(let i=0;i<emitters.length;i++){
+          const em=emitters[i];
+          if(!em||em.element!==eff.element)continue;
+          const emOwner=game.chars&&game.chars[em.ownerIdx];
+          if(!emOwner||emOwner.id!==NEO_SHIN_ID)continue;
+          if(em._highEndRing){
+            eff._nsTagged=!0;eff._highEndRing=!0;
+            eff.vx=(eff.vx||0)*4;eff.vy=(eff.vy||0)*4;
+            eff.maxBounces=6;
+            break;
+          }
+          if(em._absorbRing){
+            eff._nsTagged=!0;eff._absorbRing=!0;eff.damage=0;
+            break;
+          }
+          if(em._shinRing){
+            eff._nsTagged=!0;eff._shinRing=!0;
+            break;
+          }
+        }
+      });
+      if(game.enemies){
+        game.friendshipEffects.forEach(eff=>{
+          if(!eff||eff.type!=="reflection_ring"||!eff._absorbRing)return;
+          if(!eff._absorbHits)eff._absorbHits=new Set();
+          game.enemies.forEach((en,idx)=>{
+            if(!en||!en.alive)return;
+            const dx=eff.x-en.x,dy=eff.y-en.y;
+            if(dx*dx+dy*dy>=(eff.radius+en.radius)*(eff.radius+en.radius))return;
+            const key=idx+"_"+Math.floor(3*(eff.life||0));
+            if(eff._absorbHits.has(key))return;
+            eff._absorbHits.add(key);
+            const maxHp=en.maxHP||en.hp||1;
+            const dmg=Math.max(1,Math.floor(maxHp*0.01));
+            en.currentHP-=dmg;
+            try{if(typeof addFriendshipBattleStats==="function")addFriendshipBattleStats(dmg)}catch(_){}
+            try{if(typeof $e==="function")$e(en.x,en.y-en.radius,dmg,eff.element)}catch(_){}
+            en.hitFlash=.12;
+            if(en.currentHP<=0){en.alive=!1;nsSfx("kill");nsFx(en.x,en.y,nsTextColor(en.element),15)}
+          });
+        });
+      }
+    }catch(_){}
+    return result;
+  };
+
+  const nsPrevXe=typeof Xe==="function"?Xe:null;
+  Xe=function(e){
+    if(e&&e.id===NEO_SHIN_ID&&e.ssType==="neo_kai_override"){
+      try{
+        if(typeof game!=="undefined"&&game){
+          game.piercing=!0;
+          game.pierceHitEnemies=new Set();
+          game.pierceHitAllies=new Set();
+        }
+        if(typeof K==="function")K(e);
+        e.spd=Math.floor(2*(e.spd||0));
+        e._neoOverride=!0;
+        e._neoShinSSActive=!0;
+        e._neoShinDecelMult=0.67;
+        e._allAntiAbiBackup=e.abi;
+        e._allAntiAbiDescBackup=e.abiDesc;
+        e.abi=[e.abi,"アンチ重力バリア","アンチワープ","アンチブロック","飛行","アンチダメージウォール","アンチ減速壁","アンチ減速床"].filter(Boolean).join(" / ");
+        e.abiDesc="重力バリア・ワープ・ブロック・地上ギミック・ダメージウォール・減速壁・減速床を無効化 / SSショット中の減速率33%軽減";
+        nsFx(e.x,e.y,"#4dc2ff",30);
+        if(game){game.shakeTimer=Math.max(game.shakeTimer||0,.5);game.shakeIntensity=Math.max(game.shakeIntensity||0,8)}
+        return;
+      }catch(_){}
+    }
+    if(nsPrevXe)return nsPrevXe.apply(this,arguments);
+  };
+
+  function nsGrantToPlayer(){
+    try{
+      if(typeof playerData==="undefined"||!playerData)return;
+      if(!Array.isArray(playerData.ownedMonsters))playerData.ownedMonsters=[];
+      if(!playerData.ownedMonsters.includes(NEO_SHIN_ID)){
+        playerData.ownedMonsters.push(NEO_SHIN_ID);
+        try{if(typeof savePlayerData==="function")savePlayerData()}catch(_){}
+      }
+      if(!playerData.neoShinGranted){
+        playerData.neoShinGranted=!0;
+        try{if(typeof savePlayerData==="function")savePlayerData()}catch(_){}
+        try{
+          setTimeout(function(){
+            try{alert("🎁 テスト配布！\n★6 ネオ真 を獲得しました！\n（強さテスト用キャラクター）")}catch(_){}
+          },800);
+        }catch(_){}
+      }
+    }catch(_){}
+  }
+
+  function nsTryGrant(){
+    if(typeof playerData!=="undefined"&&playerData){nsGrantToPlayer();return!0}
+    return!1;
+  }
+
+  if(!nsTryGrant()){
+    let tries=0;
+    const grantInterval=setInterval(function(){
+      tries++;
+      if(nsTryGrant()||tries>200)clearInterval(grantInterval);
+    },100);
+  }
+})();
+</script>
 
 </html>
