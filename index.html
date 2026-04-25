@@ -150,5 +150,42 @@
     }
   }catch(e){}
 })();
+</script><script>
+// Fix: ルシフェル(id:1703) SS percent damage. The nt replacement at the end of
+// the file does not chain to previous wrappers, bypassing the lucifer touch
+// tracking. Re-wrap nt so lucifer's touched enemies get recorded and the
+// damage-taken boost is applied on contact.
+(function(){
+  if(typeof nt!=='function'||nt.__luciferFixWrapped)return;
+  var origNt=nt;
+  function applyDamageTakenBoost(target,mult,color){
+    if(!target||!target.alive)return;
+    var cur=target._damageTakenBoostMult||1;
+    if(mult>=cur||true!==target._damageTakenBoostPermanent){
+      target._damageTakenBoostMult=Math.max(cur,mult||1);
+      target._damageTakenBoostPermanent=true;
+      target._damageTakenBoostTurns=0;
+    }
+    target.hitFlash=Math.max(target.hitFlash||0,.12);
+    try{if(typeof _e==='function')_e(target.x,target.y,color||"#aa44ff",10);}catch(_){}
+  }
+  nt=function(e,t){
+    var ret=origNt.apply(this,arguments);
+    try{
+      if(game&&game.ssActive&&e&&t&&game.chars&&e===game.chars[game.currentCharIdx]){
+        if("lucifer_percent_vulnerability"===e.ssType){
+          if(!e._luciferTouchedEnemies)e._luciferTouchedEnemies=new Set();
+          if(!e._luciferTouchedEnemies.has(t)){
+            e._luciferTouchedEnemies.add(t);
+            applyDamageTakenBoost(t,e.ssDamageTakenMult||3,"#aa44ff");
+          }
+        }
+      }
+    }catch(_){}
+    return ret;
+  };
+  nt.__luciferFixWrapped=true;
+})();
 </script>
+
  </html>
