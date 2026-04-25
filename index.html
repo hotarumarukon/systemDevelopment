@@ -49,7 +49,23 @@
       subBumpDesc:"画面上のランダムな位置にピラーが出現し敵を攻撃",
       abi:"アンチ重力バリア / アンチダメージウォール / アンチブロック / アンチ減速壁 / バイタルキラーEL / 回復(HP25%回復)",
       abiDesc:"重力バリア・DW・ブロック・減速壁を無効化 / HP50%以上の敵に3倍ダメージ / 移動後にHP25%回復",
-      lore:"水面を揺らし舞う蝶のごとき射手。ピラーを頭上に降ろし、戦場を一面の煌めきに変える。"}
+      lore:"水面を揺らし舞う蝶のごとき射手。ピラーを頭上に降ろし、戦場を一面の煌めきに変える。"},
+    {id:1804,name:"ネオ真",icon:"🧝‍♂️",element:"water",rarity:6,
+      hp:28000,atk:20500,spd:330,shotType:"reflect",
+      ssName:"ネオ・トゥルーオーバードライブ",
+      ssDesc:"貫通タイプになり、スピードが2倍になり、全てのギミックを無効化(オールアンチ)し、SSショット中の減速率が33%軽減される",
+      ssTurns:6,ssType:"neo_kai_override",
+      bumpType:"reflection_ring",bumpName:"ハイエンドリフレクションリング",bumpPower:2222222,
+      bumpDesc:"最高性能のリフレクションリングで敵を攻撃",
+      bumpSpec:"リフレクションリングの通常仕様に比べ、壁反射数が増加(反射6→7壁消え)&発射間隔0.1秒、リフレクションリングの投擲速度は4倍",
+      subBumpType:"neo_reflection_ring",subBumpName:"ネオリフレクションリング・真",subBumpPower:1e7,
+      subBumpDesc:"真の力を宿したリフレクションリングで全ての敵を溶かす",
+      subBumpType2:"reflection_ring",subBumpName2:"アブソーブリフレクションリング",subBumpPower2:0,
+      subBumpDesc2:"アブソーブ式リフレクションリングを放つ",
+      subBumpSpec2:"敵の最大HPの1%のダメージを与えるリング(発射速度・間隔は普通のリフレクションリングと同様)",
+      abi:"ファーストバリア / アンチダメージウォール / 飛行 / アンチ減速壁 / アンチ減速床 / 壁SSターン短縮",
+      abiDesc:"マップ開始時にバリアを付与 / DW・減速壁・減速床を無効化 / 地上ギミック無効 / 壁に触れるとSSターンを1短縮(同じ壁で重複なし)",
+      lore:"テスト用に降臨した真の力を宿したネオ。最高性能のリフレクションリングを操り、全ての敵を溶かす。"}
   ];
   newMonsters.forEach(function(mon){
     if(!ALL_MONSTERS.some(function(m){return m&&m.id===mon.id;}))ALL_MONSTERS.push(mon);
@@ -113,6 +129,34 @@
         return ret;
       };
       Ye.__terenWrapped=true;
+    }
+  }catch(_){}
+
+  // ネオ真(id:1804) SS: adjust neo_kai_override 10x speed → 2x speed
+  try{
+    if(typeof Xe==='function'&&!Xe.__neoShinWrapped){
+      var origXeShin=Xe;
+      Xe=function(e){
+        var ret=origXeShin.apply(this,arguments);
+        try{
+          if(e&&e.id===1804&&e.ssType==='neo_kai_override'){
+            // origXe set spd to 10x; rescale to 2x of original
+            e.spd=Math.max(1,Math.floor(e.spd/5));
+          }
+        }catch(_){}
+        return ret;
+      };
+      Xe.__neoShinWrapped=true;
+    }
+  }catch(_){}
+
+  // Auto-grant ネオ真(id:1804) for strength testing
+  try{
+    if(typeof playerData!=='undefined'&&playerData&&Array.isArray(playerData.ownedMonsters)){
+      if(!playerData.ownedMonsters.includes(1804)){
+        playerData.ownedMonsters.push(1804);
+        try{if(typeof Mt==='function')Mt();}catch(_){}
+      }
     }
   }catch(_){}
 
