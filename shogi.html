@@ -1,0 +1,2613 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>将棋</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
+  html, body {
+    height: 100%;
+    background: #1a1410;
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif;
+    overflow: hidden;
+    touch-action: manipulation;
+  }
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+      radial-gradient(ellipse at center, #2a1f17 0%, #120c08 100%);
+  }
+
+  .app {
+    aspect-ratio: 2 / 3;
+    height: 100vh;
+    max-width: 100vw;
+    width: auto;
+    display: flex;
+    flex-direction: column;
+    background:
+      repeating-linear-gradient(180deg, rgba(255,255,255,0.012) 0 2px, transparent 2px 4px),
+      linear-gradient(180deg, #1f1812 0%, #160f0a 100%);
+    position: relative;
+    box-shadow: 0 0 60px rgba(0,0,0,0.6);
+  }
+  @media (max-aspect-ratio: 2/3) {
+    .app { width: 100vw; height: auto; }
+  }
+
+  /* Top bar */
+  .topbar {
+    flex: 0 0 auto;
+    padding: 2.5% 4%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(212,175,55,0.15);
+  }
+  .title {
+    font-size: 4.2vmin;
+    color: #e8d49a;
+    letter-spacing: 0.5em;
+    font-weight: 500;
+    padding-left: 0.5em;
+  }
+  .turn-badge {
+    font-size: 2.6vmin;
+    color: #b8a373;
+    padding: 0.4em 0.9em;
+    border: 1px solid rgba(212,175,55,0.3);
+    border-radius: 2px;
+    letter-spacing: 0.2em;
+  }
+  .turn-badge.active {
+    color: #1a1410;
+    background: linear-gradient(180deg, #e8d49a, #c8a96a);
+    border-color: #c8a96a;
+  }
+  .menu-btn {
+    background: none;
+    border: 1px solid rgba(212,175,55,0.3);
+    color: #b8a373;
+    width: 8vmin; height: 8vmin;
+    border-radius: 50%;
+    font-size: 4vmin;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .menu-btn:active { background: rgba(212,175,55,0.1); }
+
+  /* Komadai (captured pieces) */
+  .komadai {
+    flex: 0 0 auto;
+    height: 8.5%;
+    padding: 0.8% 3%;
+    display: flex;
+    align-items: center;
+    gap: 1.2%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    background: linear-gradient(180deg, rgba(60,40,25,0.5), rgba(40,28,18,0.5));
+    border-top: 1px solid rgba(212,175,55,0.08);
+    border-bottom: 1px solid rgba(212,175,55,0.08);
+  }
+  .komadai::-webkit-scrollbar { display: none; }
+  .komadai-label {
+    font-size: 2.3vmin;
+    color: #8a7758;
+    letter-spacing: 0.15em;
+    flex: 0 0 auto;
+    margin-right: 1.5%;
+  }
+  .captured-piece {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    background: linear-gradient(160deg, #e8c890 0%, #d4a866 100%);
+    color: #1a0f06;
+    border-radius: 2px;
+    padding: 0.3em 0.4em;
+    font-size: 2.6vmin;
+    cursor: pointer;
+    border: 1px solid rgba(80,50,20,0.4);
+    transition: transform 0.1s;
+  }
+  .captured-piece.selected {
+    background: linear-gradient(160deg, #ffe9a0 0%, #e8c060 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(212,175,55,0.5);
+  }
+  .captured-piece .count {
+    font-size: 2vmin;
+    margin-left: 0.2em;
+    font-weight: bold;
+  }
+  .komadai.gote .captured-piece { transform: rotate(180deg); }
+  .komadai.gote .captured-piece.selected { transform: rotate(180deg) translateY(2px); }
+
+  /* Board */
+  .board-wrap {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2% 3%;
+    min-height: 0;
+  }
+  .board {
+    aspect-ratio: 1 / 1;
+    height: 100%;
+    max-width: 100%;
+    width: auto;
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    grid-template-rows: repeat(9, 1fr);
+    background:
+      repeating-linear-gradient(90deg, rgba(80,45,20,0.06) 0 1px, transparent 1px 12px),
+      linear-gradient(160deg, #d9b27a 0%, #c89a5a 50%, #b88a48 100%);
+    border: 0.6vmin solid #2a1810;
+    box-shadow:
+      inset 0 0 30px rgba(60,30,10,0.3),
+      0 0 20px rgba(0,0,0,0.5),
+      0 0 0 1px rgba(255,220,150,0.1);
+    position: relative;
+  }
+  .cell {
+    border-right: 1px solid rgba(40,20,5,0.5);
+    border-bottom: 1px solid rgba(40,20,5,0.5);
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cell:nth-child(9n) { border-right: none; }
+  .cell:nth-last-child(-n+9) { border-bottom: none; }
+  /* Star points (4 dots between 3-3 lines) */
+  .board::before, .board::after,
+  .board > .star1, .board > .star2 {
+    content: '';
+    position: absolute;
+    width: 0.8vmin; height: 0.8vmin;
+    background: #2a1810;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .board::before { left: 33.333%; top: 33.333%; transform: translate(-50%, -50%); }
+  .board::after  { left: 66.666%; top: 33.333%; transform: translate(-50%, -50%); }
+
+  .cell.legal::after {
+    content: '';
+    position: absolute;
+    width: 30%; height: 30%;
+    border-radius: 50%;
+    background: rgba(40,90,160,0.45);
+    box-shadow: 0 0 8px rgba(80,140,220,0.6);
+    pointer-events: none;
+  }
+  .cell.legal.capture::after {
+    width: 80%; height: 80%;
+    background: transparent;
+    border: 0.4vmin solid rgba(180,40,40,0.7);
+    box-shadow: inset 0 0 8px rgba(180,40,40,0.4);
+  }
+  .cell.selected {
+    background: rgba(255,220,120,0.35);
+    box-shadow: inset 0 0 0 0.4vmin rgba(212,175,55,0.7);
+  }
+  .cell.last-move {
+    background: rgba(120,160,220,0.18);
+  }
+  .cell.check {
+    background: rgba(220,60,60,0.3);
+  }
+
+  /* Piece */
+  .piece {
+    width: 88%;
+    height: 88%;
+    background: linear-gradient(160deg, #f4dca0 0%, #d9b073 50%, #c89a5a 100%);
+    clip-path: polygon(50% 4%, 88% 22%, 96% 100%, 4% 100%, 12% 22%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1a0f06;
+    font-size: 4.2vmin;
+    font-weight: 600;
+    line-height: 1;
+    position: relative;
+    filter: drop-shadow(0 0.3vmin 0.5vmin rgba(0,0,0,0.4));
+    transition: transform 0.15s;
+  }
+  .piece.gote { transform: rotate(180deg); }
+  .piece.promoted { color: #8a1d1d; }
+  .piece .label {
+    transform: translateY(0.3vmin);
+  }
+  .piece.small {
+    font-size: 2.4vmin;
+  }
+  .piece.small .label { transform: translateY(0); }
+
+  /* Modal */
+  .modal-back {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    backdrop-filter: blur(4px);
+  }
+  .modal-back.show { display: flex; }
+  .modal {
+    background: linear-gradient(180deg, #2a1f17, #1a1208);
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 4px;
+    padding: 6vmin 5vmin;
+    color: #e8d49a;
+    text-align: center;
+    max-width: 80%;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+  }
+  .modal h2 {
+    font-size: 3.6vmin;
+    letter-spacing: 0.3em;
+    font-weight: 500;
+    margin-bottom: 4vmin;
+    color: #e8d49a;
+  }
+  .modal p {
+    font-size: 2.6vmin;
+    color: #b8a373;
+    margin-bottom: 3vmin;
+    letter-spacing: 0.1em;
+  }
+  .modal .btnrow {
+    display: flex;
+    gap: 3vmin;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .btn {
+    background: linear-gradient(180deg, #c8a96a 0%, #a08440 100%);
+    border: 1px solid #8a6a30;
+    color: #1a0f06;
+    padding: 1.5vmin 3.5vmin;
+    font-size: 2.6vmin;
+    letter-spacing: 0.2em;
+    border-radius: 2px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    min-width: 18vmin;
+  }
+  .btn:active { transform: translateY(1px); filter: brightness(0.9); }
+  .btn.ghost {
+    background: transparent;
+    color: #b8a373;
+    border-color: rgba(212,175,55,0.4);
+    font-weight: normal;
+  }
+  .btn.toggle:not(.active) {
+    background: transparent;
+    color: #b8a373;
+    border-color: rgba(212,175,55,0.3);
+    font-weight: normal;
+  }
+
+  .level-section {
+    margin-top: 4vmin;
+    padding-top: 4vmin;
+    border-top: 1px solid rgba(212,175,55,0.15);
+  }
+  .level-section.hidden { display: none; }
+  .level-section .label {
+    font-size: 2.4vmin;
+    color: #8a7758;
+    letter-spacing: 0.2em;
+    margin-bottom: 1.5vmin;
+  }
+  .level-display {
+    font-size: 4.5vmin;
+    color: #e8d49a;
+    margin-bottom: 0.5em;
+    letter-spacing: 0.1em;
+  }
+  .level-display .num { color: #f4d060; font-weight: bold; }
+  .level-name {
+    font-size: 2.4vmin;
+    color: #b8a373;
+    margin-bottom: 2vmin;
+    letter-spacing: 0.15em;
+    min-height: 1em;
+  }
+  .level-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 1vmin;
+    background: linear-gradient(90deg,
+      rgba(150,150,150,0.4) 0%,
+      rgba(212,175,55,0.5) 50%,
+      rgba(220,80,40,0.6) 100%);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  .level-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 6.5vmin;
+    height: 6.5vmin;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #f4dca0 0%, #c8a96a 100%);
+    cursor: pointer;
+    border: 0.4vmin solid #2a1810;
+    box-shadow: 0 0.4vmin 1vmin rgba(0,0,0,0.5);
+  }
+  .level-slider::-moz-range-thumb {
+    width: 6.5vmin;
+    height: 6.5vmin;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #f4dca0 0%, #c8a96a 100%);
+    border: 0.4vmin solid #2a1810;
+    box-shadow: 0 0.4vmin 1vmin rgba(0,0,0,0.5);
+    cursor: pointer;
+  }
+  .level-marks {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.2vmin;
+    font-size: 1.8vmin;
+    color: #6a5a3a;
+    padding: 0 0.5vmin;
+  }
+  .label .sub-note {
+    font-size: 1.7vmin;
+    color: #6a5a3a;
+    letter-spacing: 0;
+  }
+
+  .pda-row {
+    margin-top: 3vmin;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2vmin;
+  }
+  .pda-label {
+    font-size: 2vmin;
+    color: #8a7758;
+    letter-spacing: 0.2em;
+  }
+  .pda-buttons {
+    display: flex;
+    gap: 1vmin;
+  }
+  .pda-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 1.2vmin 0.4vmin;
+    font-size: 1.85vmin;
+    background: rgba(40,30,20,0.8);
+    color: #b8a373;
+    border: 0.3vmin solid rgba(212,175,55,0.3);
+    border-radius: 0.8vmin;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    font-family: inherit;
+  }
+  .pda-btn.active {
+    background: linear-gradient(180deg, rgba(212,175,55,0.4), rgba(160,120,40,0.5));
+    color: #fff7d0;
+    border-color: #d4af37;
+  }
+  .pda-btn:active { transform: translateY(1px); }
+
+  /* 3-button mode toggle: equal share */
+  .mode-toggle .btn.toggle {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 1.4vmin 0.8vmin;
+    font-size: 2.3vmin;
+    letter-spacing: 0.1em;
+  }
+
+  .modal.scrollable {
+    max-height: 92%;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .modal.scrollable::-webkit-scrollbar { width: 0.6vmin; }
+  .modal.scrollable::-webkit-scrollbar-track { background: transparent; }
+  .modal.scrollable::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.3); border-radius: 1vmin; }
+
+  /* Shop button (in new game modal) */
+  .shop-link {
+    margin-top: 4vmin;
+    padding-top: 4vmin;
+    border-top: 1px solid rgba(212,175,55,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2vmin;
+  }
+  .shop-link .label-side {
+    text-align: left;
+  }
+  .shop-link .label-side .name {
+    font-size: 2.4vmin;
+    color: #b8a373;
+    letter-spacing: 0.15em;
+  }
+  .shop-link .label-side .balance-mini {
+    font-size: 2vmin;
+    color: #f4d060;
+    margin-top: 0.4em;
+    letter-spacing: 0.1em;
+  }
+  .shop-link .open {
+    background: linear-gradient(180deg, #b88040 0%, #804020 100%);
+    border: 1px solid #602810;
+    color: #ffeac0;
+    padding: 1.2vmin 2.5vmin;
+    border-radius: 2px;
+    font-size: 2.4vmin;
+    letter-spacing: 0.2em;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+  }
+  .shop-link .open:active { transform: translateY(1px); filter: brightness(0.9); }
+
+  /* Shop modal */
+  .modal.shop-modal {
+    width: 92%;
+    max-width: 92%;
+    max-height: 90%;
+    padding: 4vmin 3vmin;
+    display: flex;
+    flex-direction: column;
+  }
+  .modal.shop-modal h2 { margin-bottom: 2vmin; }
+  .balance-bar {
+    flex: 0 0 auto;
+    text-align: center;
+    padding: 1.5vmin;
+    margin-bottom: 2vmin;
+    background: linear-gradient(180deg, rgba(244,208,96,0.1), rgba(244,208,96,0.04));
+    border: 1px solid rgba(244,208,96,0.25);
+    border-radius: 2px;
+  }
+  .balance-bar .label-text {
+    font-size: 2vmin;
+    color: #b8a373;
+    letter-spacing: 0.3em;
+    margin-right: 1em;
+  }
+  .balance-bar .value {
+    font-size: 3.4vmin;
+    color: #f4d060;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+  }
+  .shop-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 0.5vmin;
+    text-align: left;
+  }
+  .shop-section { margin-bottom: 2.5vmin; }
+  .section-title {
+    font-size: 2.2vmin;
+    color: #d4af37;
+    letter-spacing: 0.4em;
+    margin-bottom: 0.5vmin;
+    padding-bottom: 0.8vmin;
+    border-bottom: 1px solid rgba(212,175,55,0.2);
+  }
+  .shop-item {
+    display: flex;
+    align-items: center;
+    padding: 1.8vmin 0.5vmin;
+    border-bottom: 1px solid rgba(212,175,55,0.07);
+    gap: 2vmin;
+  }
+  .shop-item .info { flex: 1; min-width: 0; }
+  .shop-item .name {
+    font-size: 2.4vmin;
+    color: #e8d49a;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.3em;
+  }
+  .shop-item.owned .name { color: #f4d060; }
+  .shop-item.locked .name { color: #5a4a32; }
+  .shop-item .desc {
+    font-size: 1.9vmin;
+    color: #8a7758;
+    letter-spacing: 0.03em;
+    line-height: 1.4;
+  }
+  .shop-item.locked .desc { color: #4a3a22; }
+  .shop-item .right {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.8vmin;
+  }
+  .shop-item .price {
+    font-size: 2vmin;
+    color: #c8a96a;
+    letter-spacing: 0.05em;
+  }
+  .shop-item .buy-btn {
+    background: linear-gradient(180deg, #c8a96a, #a08440);
+    border: 1px solid #8a6a30;
+    color: #1a0f06;
+    padding: 0.9vmin 2vmin;
+    border-radius: 2px;
+    font-size: 2vmin;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    min-width: 14vmin;
+    letter-spacing: 0.1em;
+  }
+  .shop-item .buy-btn:disabled {
+    background: #2a1f15;
+    color: #5a4a32;
+    border-color: #3a2a1c;
+    cursor: default;
+  }
+  .shop-item.owned .buy-btn {
+    background: linear-gradient(180deg, #4a7a4a, #2a5a2a);
+    color: #d0e8c0;
+    border-color: #2a4a2a;
+  }
+  .counter {
+    display: flex;
+    align-items: center;
+    gap: 0.8vmin;
+  }
+  .counter button {
+    width: 5.5vmin; height: 5.5vmin;
+    background: #1a1208;
+    border: 1px solid #c8a96a;
+    color: #c8a96a;
+    font-size: 2.6vmin;
+    border-radius: 2px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0;
+  }
+  .counter button:disabled { opacity: 0.3; cursor: default; }
+  .counter button:active:not(:disabled) { transform: translateY(1px); }
+  .counter .count {
+    min-width: 4vmin;
+    text-align: center;
+    font-size: 2.6vmin;
+    color: #f4d060;
+    font-weight: bold;
+  }
+  .shop-footer {
+    flex: 0 0 auto;
+    padding-top: 2vmin;
+    border-top: 1px solid rgba(212,175,55,0.15);
+    margin-top: 1vmin;
+  }
+
+  .status {
+    flex: 0 0 auto;
+    text-align: center;
+    padding: 1.2% 3%;
+    font-size: 2.4vmin;
+    color: #b8a373;
+    letter-spacing: 0.15em;
+    border-top: 1px solid rgba(212,175,55,0.1);
+    min-height: 4vmin;
+  }
+  .status.warn { color: #e89060; }
+  .status.win { color: #f4d060; font-size: 3vmin; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="title">将棋</div>
+    <div id="turnBadge" class="turn-badge">先手番</div>
+    <button id="menuBtn" class="menu-btn" aria-label="メニュー">≡</button>
+  </div>
+
+  <!-- Gote (top) komadai -->
+  <div class="komadai gote" id="komadaiGote">
+    <span class="komadai-label">後手 持駒</span>
+  </div>
+
+  <div class="board-wrap">
+    <div class="board" id="board"></div>
+  </div>
+
+  <!-- Sente (bottom) komadai -->
+  <div class="komadai" id="komadaiSente">
+    <span class="komadai-label">先手 持駒</span>
+  </div>
+
+  <div class="status" id="status">対局を開始してください</div>
+
+  <!-- New game modal -->
+  <div class="modal-back show" id="modalNew">
+    <div class="modal scrollable">
+      <h2>将　棋</h2>
+      <p>対局形式</p>
+      <div class="btnrow mode-toggle">
+        <button class="btn toggle active" data-mode="human">人 対 人</button>
+        <button class="btn toggle" data-mode="ai">人 対 AI</button>
+        <button class="btn toggle" data-mode="aivsai">AI 対 AI</button>
+      </div>
+
+      <div class="level-section hidden" id="senteLevelSection">
+        <div class="label">先手 AI<span class="sub-note"> （ショップ強化が適用される側）</span></div>
+        <div class="level-display">Lv.<span class="num" id="senteLevelNum">5</span></div>
+        <div class="level-name" id="senteLevelName">普通</div>
+        <input type="range" min="0" max="20" value="5" class="level-slider" id="senteLevelSlider">
+        <div class="level-marks">
+          <span>自滅</span>
+          <span>普通</span>
+          <span>最強</span>
+        </div>
+        <div class="pda-row">
+          <div class="pda-label">攻撃性</div>
+          <div class="pda-buttons" id="sentePdaButtons">
+            <button class="pda-btn" data-pda="0">完全防御</button>
+            <button class="pda-btn active" data-pda="1">均衡</button>
+            <button class="pda-btn" data-pda="2">攻撃的</button>
+            <button class="pda-btn" data-pda="3">決め手</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="level-section hidden" id="goteLevelSection">
+        <div class="label" id="goteLevelLabel">AI レベル</div>
+        <div class="level-display">Lv.<span class="num" id="goteLevelNum">5</span></div>
+        <div class="level-name" id="goteLevelName">普通</div>
+        <input type="range" min="0" max="20" value="5" class="level-slider" id="goteLevelSlider">
+        <div class="level-marks">
+          <span>自滅</span>
+          <span>普通</span>
+          <span>最強</span>
+        </div>
+        <div class="pda-row">
+          <div class="pda-label">攻撃性</div>
+          <div class="pda-buttons" id="gotePdaButtons">
+            <button class="pda-btn" data-pda="0">完全防御</button>
+            <button class="pda-btn active" data-pda="1">均衡</button>
+            <button class="pda-btn" data-pda="2">攻撃的</button>
+            <button class="pda-btn" data-pda="3">決め手</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="shop-link">
+        <div class="label-side">
+          <div class="name">⚔ 強化ショップ</div>
+          <div class="balance-mini">所持金 ¥<span id="newGameBalance">100,000</span></div>
+        </div>
+        <button class="open" id="openShopBtn">開く</button>
+      </div>
+
+      <div class="btnrow" style="margin-top: 5vmin;">
+        <button class="btn" id="startGameBtn">対 局 開 始</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shop modal -->
+  <div class="modal-back" id="modalShop">
+    <div class="modal shop-modal">
+      <h2>強 化 ショップ</h2>
+      <div class="balance-bar">
+        <span class="label-text">所持金</span><span class="value">¥<span id="shopBalance">100,000</span></span>
+      </div>
+      <div class="shop-body" id="shopBody"><!-- populated by JS --></div>
+      <div class="shop-footer btnrow">
+        <button class="btn ghost" id="shopReset">全リセット</button>
+        <button class="btn" id="shopClose">確 定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Promotion modal -->
+  <div class="modal-back" id="modalPromote">
+    <div class="modal">
+      <h2>成りますか</h2>
+      <div class="btnrow">
+        <button class="btn" data-promote="yes">成 る</button>
+        <button class="btn ghost" data-promote="no">不成（そのまま）</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menu modal -->
+  <div class="modal-back" id="modalMenu">
+    <div class="modal">
+      <h2>メニュー</h2>
+      <div class="btnrow">
+        <button class="btn" id="menuNew">新しい対局</button>
+        <button class="btn ghost" id="menuClose">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game over modal -->
+  <div class="modal-back" id="modalEnd">
+    <div class="modal">
+      <h2 id="endTitle">勝　負　あ　り</h2>
+      <p id="endText"></p>
+      <div class="btnrow">
+        <button class="btn" id="endNew">もう一局</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+"use strict";
+
+// ============ Constants ============
+const SENTE = 0, GOTE = 1;
+const N = 9;
+
+// Piece types
+const KANJI = {
+  K:  { norm:'玉', prom:'帝',  alt:'王' },  // 帝 = upgraded king ("emperor")
+  R:  { norm:'飛', prom:'龍' },
+  B:  { norm:'角', prom:'馬' },
+  G:  { norm:'金', prom:'尊' },                // 尊 = upgraded gold (only used if shop perk owned)
+  S:  { norm:'銀', prom:'全' },
+  Nk: { norm:'桂', prom:'圭' },
+  L:  { norm:'香', prom:'杏' },
+  P:  { norm:'歩', prom:'と' },
+  D:  { norm:'将', prom:'神' },                // 大将 → 神 (custom shop piece)
+  MR: { norm:'車', prom:'俥' },                // 小飛車 → 小飛成
+  MB: { norm:'象', prom:'相' },                // 小角 → 小角成
+  SH: { norm:'盾', prom:'楯' },                // 盾 → 盾成
+};
+const ORDER = ['R','B','G','S','Nk','L','P','D','MR','MB','SH']; // for komadai display order
+const VALUES      = { K:10000, R:10, B:8, G:6, S:5, Nk:4, L:3, P:1, D:9,  MR:4, MB:3, SH:3 };
+const PROM_VALUES = { R:13, B:11, G:15, S:6, Nk:6, L:6, P:4, K:10000, D:16, MR:7, MB:6, SH:4 };
+
+// ============ Shop ============
+// Persistent within session. Applies only to SENTE (the human player buying these).
+const SHOP_ITEMS = {
+  king_promote:      { price: 10000, name: '王が成れる',      desc: '成ると全方向に走れる（クイーン化）' },
+  gold_promote:      { price:  5000, name: '金が成れる',      desc: '金の動ける6方向すべてが走り駒化（前・斜め前・左右・後ろ全部スライド）' },
+  start_pawn_prom:   { price: 10000, name: '最初から成歩',    desc: 'すべての歩が「と」状態で開始' },
+  start_gold_prom:   { price:  5000, name: '最初から金成',    desc: '金が成った状態で開始（要：金成）', req:'gold_promote' },
+  start_king_prom:   { price: 10000, name: '最初から王成',    desc: '王が成った状態で開始（要：王成）', req:'king_promote' },
+  start_bishop_prom: { price:  5000, name: '最初から馬',      desc: '角が成った状態（馬）で開始' },
+  start_rook_prom:   { price: 10000, name: '最初から龍',      desc: '飛車が成った状態（龍）で開始' },
+  general:           { price: 10000, name: '大将を配備',      desc: '王の前マスに新駒「将」が登場（後ろ以外1歩・前は走り）' },
+  general_promote:   { price: 10000, name: '神（大将の成）',  desc: '大将の成り解禁。神は周囲2マスへどこでも飛べる', req:'general' },
+  start_general_prom:{ price: 10000, name: '最初から神',      desc: '大将が「神」状態で開始（要：神）',         req:'general_promote' },
+  mini_rook:         { price:  1000, name: '小飛車（車）',    desc: '飛車の右横に配備。動きは縦横1歩。成ると上下のみ走り＋左右1歩' },
+  mini_bishop:       { price:  1000, name: '小角（象）',      desc: '角の左横に配備。動きは斜め1歩。成ると前斜めのみ走り＋後斜め1歩' },
+  shield:            { price:  1000, name: '盾',              desc: '王の前2マス目に配備。左上・右上の1歩のみ。真上から取られない！成ると下1歩追加' },
+};
+const ROOK_PRICE = 5000;
+
+let shop = {
+  budget: 100000,
+  owned: {},      // { item_key: true }
+  extraRooks: 0,  // count of bonus rooks in starting hand
+};
+
+// AI difficulty: 0 = anti-AI (deliberately loses), 20 = strongest
+// depth: search ply, randomness: 0..1 chance of suboptimal move,
+// eval: 1 material, 2 +positional, 3 +king safety/pressure, 4 +囲い/機動力/駒の利き/ヒモ
+// iterDeep: iterative deepening with timeMs budget
+// useTT: transposition table   killer: killer-move table   history: history heuristic
+// lmr: late move reductions    pvs: principal variation search
+// qcheck: quiescence includes check moves
+// openingBook: use a small opening book in the early game
+// aspiration: aspiration window for iterative deepening
+// evalBoost: multiplicative bias on the strong-eval terms (>1 = "本気を出す")
+const LEVEL_NAMES = {
+  0: '自滅',     1: 'ランダム', 2: '駆け出し', 3: '初心者',  4: '入門級',
+  5: '普通',     6: '中級',     7: '上級',     8: '強豪',    9: '段位',
+ 10: 'セミプロ',11: 'アマ強豪',12: 'アマ名人',13: '奨励会員',14: 'プロ棋士',
+ 15: 'トッププロ',16: '名人挑戦',17: '名人',  18: '竜王',    19: '神域',
+ 20: '最強',
+};
+const LEVEL_CONFIG = {
+  0:  { antiAI: true,  depth: 1, randomness: 0.0,  eval: 2 },
+  1:  { depth: 0, randomness: 1.0,  eval: 1 },
+  2:  { depth: 0, randomness: 0.7,  eval: 1 },
+  3:  { depth: 1, randomness: 0.45, eval: 1 },
+  4:  { depth: 1, randomness: 0.25, eval: 2 },
+  5:  { depth: 1, randomness: 0.10, eval: 3 },
+  6:  { depth: 2, randomness: 0.05, eval: 2 },
+  7:  { depth: 2, randomness: 0.0,  eval: 3 },
+  8:  { depth: 2, randomness: 0.0,  eval: 3, quiesce: true,  qdepth: 2 },
+  9:  { depth: 2, randomness: 0.0,  eval: 3, quiesce: true,  qdepth: 4 },
+  // ===== Lv10 以降は強化版エンジン =====
+  // qdepth は静止探索の深さ。大きすぎると爆発するので 4〜6 を現実的な上限に。
+  // qcheck は王手応酬を読むが計算量が大きいので Lv17+ のみ、しかも軽量制限付き。
+  10: { depth: 4, randomness: 0.0, eval: 4, quiesce: true, qdepth: 4, iterDeep: true, timeMs: 2500,  useTT: true, killer: true, history: true },
+  11: { depth: 5, randomness: 0.0, eval: 4, quiesce: true, qdepth: 4, iterDeep: true, timeMs: 3500,  useTT: true, killer: true, history: true, lmr: true },
+  12: { depth: 5, randomness: 0.0, eval: 4, quiesce: true, qdepth: 5, iterDeep: true, timeMs: 5000,  useTT: true, killer: true, history: true, lmr: true, pvs: true },
+  13: { depth: 6, randomness: 0.0, eval: 4, quiesce: true, qdepth: 5, iterDeep: true, timeMs: 7000,  useTT: true, killer: true, history: true, lmr: true, pvs: true },
+  14: { depth: 6, randomness: 0.0, eval: 4, quiesce: true, qdepth: 6, iterDeep: true, timeMs: 10000, useTT: true, killer: true, history: true, lmr: true, pvs: true },
+  15: { depth: 7, randomness: 0.0, eval: 4, quiesce: true, qdepth: 6, iterDeep: true, timeMs: 14000, useTT: true, killer: true, history: true, lmr: true, pvs: true },
+  16: { depth: 7, randomness: 0.0, eval: 4, quiesce: true, qdepth: 6, iterDeep: true, timeMs: 18000, useTT: true, killer: true, history: true, lmr: true, pvs: true, openingBook: true },
+  17: { depth: 8, randomness: 0.0, eval: 4, quiesce: true, qdepth: 6, iterDeep: true, timeMs: 25000, useTT: true, killer: true, history: true, lmr: true, pvs: true, openingBook: true, qcheck: true },
+  18: { depth: 8, randomness: 0.0, eval: 4, quiesce: true, qdepth: 7, iterDeep: true, timeMs: 35000, useTT: true, killer: true, history: true, lmr: true, pvs: true, openingBook: true, qcheck: true, evalBoost: 1.05 },
+  19: { depth: 9, randomness: 0.0, eval: 4, quiesce: true, qdepth: 7, iterDeep: true, timeMs: 50000, useTT: true, killer: true, history: true, lmr: true, pvs: true, openingBook: true, qcheck: true, evalBoost: 1.10 },
+  20: { depth:10, randomness: 0.0, eval: 4, quiesce: true, qdepth: 8, iterDeep: true, timeMs: 75000, useTT: true, killer: true, history: true, lmr: true, pvs: true, openingBook: true, qcheck: true, evalBoost: 1.15 },
+};
+// PDA names (攻撃性パラメータ): 0=完全防御 1=均衡(既定) 2=攻撃的 3=決め手志向
+const PDA_NAMES = ['完全防御', '均衡', '攻撃的', '決め手'];
+
+// ============ State ============
+let board;        // 9x9 array of {type, owner, prom} or null
+let captured;     // [sente, gote] objects { type: count }
+let turn;         // 0 sente / 1 gote
+let mode;         // 'human' | 'ai' | 'aivsai'
+let aiLevels = [5, 5];  // [sente, gote]. Used: gote in 'ai' mode, both in 'aivsai'
+let aiPDA    = [1, 1];  // [sente, gote] PDA: 0..3 (default 1 = balanced)
+let selected = null; // {kind:'board', r, c} or {kind:'drop', type}
+let legalDestinations = []; // array of [r, c]
+let lastMove = null;  // {fromR, fromC, toR, toC, drop:type}
+let gameOver = false;
+let pendingPromotion = null; // {fromR, fromC, toR, toC, captured}
+let gameToken = 0;     // increments each newGame, used to invalidate stale AI timers
+let positionHistory = [];   // hashes of recent positions, for sennichite avoidance
+let TT = new Map();         // transposition table: hash -> {depth, val, flag, bestMoveIdx}
+
+function hashPos(b, cap, t) {
+  const parts = [t];
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      const p = b[r][c];
+      parts.push(p ? (p.type + p.owner + (p.prom ? 'p' : '')) : '_');
+    }
+  }
+  for (const tt of ORDER) {
+    parts.push(cap[SENTE][tt] || 0);
+    parts.push(cap[GOTE][tt] || 0);
+  }
+  return parts.join(',');
+}
+
+// ============ Init board ============
+function initBoard() {
+  const b = Array.from({length: N}, () => Array(N).fill(null));
+  // gote back rank (row 0)
+  const back = ['L','Nk','S','G','K','G','S','Nk','L'];
+  for (let c = 0; c < N; c++) b[0][c] = { type: back[c], owner: GOTE, prom: false };
+  // FIX: gote rook on left (col 1, mirror of sente), bishop on right (col 7)
+  b[1][1] = { type: 'R', owner: GOTE, prom: false };
+  b[1][7] = { type: 'B', owner: GOTE, prom: false };
+  for (let c = 0; c < N; c++) b[2][c] = { type: 'P', owner: GOTE, prom: false };
+
+  // sente
+  for (let c = 0; c < N; c++) b[6][c] = { type: 'P', owner: SENTE, prom: false };
+  // FIX: sente bishop on left (col 1, file 8), rook on right (col 7, file 2) — proper shogi positions
+  b[7][1] = { type: 'B', owner: SENTE, prom: false };
+  b[7][7] = { type: 'R', owner: SENTE, prom: false };
+  for (let c = 0; c < N; c++) b[8][c] = { type: back[c], owner: SENTE, prom: false };
+
+  // ===== Shop perks (sente only) =====
+  if (shop.owned.start_pawn_prom) {
+    for (let c = 0; c < N; c++) if (b[6][c]) b[6][c].prom = true;
+  }
+  if (shop.owned.start_gold_prom && shop.owned.gold_promote) {
+    for (let c = 0; c < N; c++) if (b[8][c] && b[8][c].type === 'G') b[8][c].prom = true;
+  }
+  if (shop.owned.start_king_prom && shop.owned.king_promote) {
+    if (b[8][4] && b[8][4].type === 'K') b[8][4].prom = true;
+  }
+  if (shop.owned.start_bishop_prom && b[7][1]) b[7][1].prom = true; // bishop is now at col 1
+  if (shop.owned.start_rook_prom && b[7][7])   b[7][7].prom = true; // rook is now at col 7
+  if (shop.owned.general) {
+    const promStart = !!(shop.owned.start_general_prom && shop.owned.general_promote);
+    b[7][4] = { type: 'D', owner: SENTE, prom: promStart };
+  }
+  // New shop pieces (sente only)
+  if (shop.owned.mini_bishop) {
+    b[7][0] = { type: 'MB', owner: SENTE, prom: false }; // left of bishop
+  }
+  if (shop.owned.mini_rook) {
+    b[7][8] = { type: 'MR', owner: SENTE, prom: false }; // right of rook
+  }
+  if (shop.owned.shield) {
+    b[5][4] = { type: 'SH', owner: SENTE, prom: false }; // 2 squares above the king's pawn
+  }
+  return b;
+}
+
+function newGame(selectedMode) {
+  gameToken++;  // invalidate any stale AI timers
+  positionHistory = [];
+  TT.clear();
+  board = initBoard();
+  captured = [{}, {}];
+  if (shop.extraRooks > 0) captured[SENTE]['R'] = shop.extraRooks;
+  turn = SENTE;
+  selected = null;
+  legalDestinations = [];
+  lastMove = null;
+  gameOver = false;
+  pendingPromotion = null;
+  mode = selectedMode;
+  render();
+  if (mode === 'aivsai') {
+    setStatus(`先手 Lv${aiLevels[SENTE]}(${PDA_NAMES[aiPDA[SENTE]]}) 対 後手 Lv${aiLevels[GOTE]}(${PDA_NAMES[aiPDA[GOTE]]})`);
+    const tk = gameToken;
+    setTimeout(() => aiMove(SENTE, tk), 600);
+  } else if (mode === 'ai') {
+    setStatus(`人 対 AI（Lv.${aiLevels[GOTE]} ${LEVEL_NAMES[aiLevels[GOTE]]}・${PDA_NAMES[aiPDA[GOTE]]}）`);
+  } else {
+    setStatus('人 対 人 ・ 先手の番です');
+  }
+}
+
+// ============ Movement Generation ============
+function inBounds(r, c) { return r >= 0 && r < N && c >= 0 && c < N; }
+
+function goldSteps(owner) {
+  const d = owner === SENTE ? -1 : 1;
+  return [[d,-1],[d,0],[d,1],[0,-1],[0,1],[-d,0]];
+}
+
+// Generate pseudo-legal moves for a single piece on the board (no check filter)
+function pieceMoves(r, c, b) {
+  const p = b[r][c];
+  if (!p) return [];
+  const moves = [];
+  const owner = p.owner;
+  const d = owner === SENTE ? -1 : 1;
+
+  // Shield protection: a 盾 cannot be captured by a piece directly in front of it
+  // (i.e., a vertical attack from the shield's facing side).
+  function canHit(fromR, fromC, toR, toC, target) {
+    if (!target || target.type !== 'SH') return true;
+    if (fromC !== toC) return true; // not vertical
+    const facing = target.owner === SENTE ? -1 : 1;
+    return Math.sign(fromR - toR) !== facing;
+  }
+
+  function addStep(dr, dc) {
+    const nr = r + dr, nc = c + dc;
+    if (!inBounds(nr, nc)) return;
+    const t = b[nr][nc];
+    if (!t) { moves.push([nr, nc]); return; }
+    if (t.owner !== owner && canHit(r, c, nr, nc, t)) moves.push([nr, nc]);
+  }
+  function addSlide(dr, dc) {
+    let nr = r + dr, nc = c + dc;
+    while (inBounds(nr, nc)) {
+      const t = b[nr][nc];
+      if (!t) { moves.push([nr, nc]); }
+      else {
+        if (t.owner !== owner && canHit(r, c, nr, nc, t)) moves.push([nr, nc]);
+        break; // slide stops at any piece, even one we can't capture
+      }
+      nr += dr; nc += dc;
+    }
+  }
+
+  // ---- Shop pieces / shop-promoted moves (sente only) ----
+  // 大将 (D): 1-step in 6 directions (no straight forward, no straight back) + slide forward
+  if (p.type === 'D' && !p.prom) {
+    for (const [dr,dc] of [[-1,-1],[-1,1],[0,-1],[0,1],[1,-1],[1,1]]) addStep(dr, dc);
+    addSlide(d, 0);
+    return moves;
+  }
+  // 神 (promoted D): any square within Chebyshev 2, jumping
+  if (p.type === 'D' && p.prom) {
+    for (let dr = -2; dr <= 2; dr++) {
+      for (let dc = -2; dc <= 2; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        addStep(dr, dc);
+      }
+    }
+    return moves;
+  }
+  // 帝 (promoted K with king_promote, sente only): Queen — 8-direction slide
+  if (p.type === 'K' && p.prom && owner === SENTE && shop.owned.king_promote) {
+    for (const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]]) addSlide(dr,dc);
+    return moves;
+  }
+  // 尊 (promoted G with gold_promote, sente only): all 6 gold directions become sliding
+  if (p.type === 'G' && p.prom && owner === SENTE && shop.owned.gold_promote) {
+    for (const [dr,dc] of goldSteps(owner)) addSlide(dr,dc);
+    return moves;
+  }
+
+  // 小飛車 (MR): 1-step in 4 cardinal directions
+  if (p.type === 'MR' && !p.prom) {
+    for (const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]) addStep(dr, dc);
+    return moves;
+  }
+  // 小飛成: up/down sliding (vertical rook), left/right 1-step
+  if (p.type === 'MR' && p.prom) {
+    addSlide(-1, 0); addSlide(1, 0);
+    addStep(0, -1); addStep(0, 1);
+    return moves;
+  }
+  // 小角 (MB): 1-step in 4 diagonals
+  if (p.type === 'MB' && !p.prom) {
+    for (const [dr,dc] of [[-1,-1],[-1,1],[1,-1],[1,1]]) addStep(dr, dc);
+    return moves;
+  }
+  // 小角成: forward diagonals slide, backward diagonals 1-step
+  if (p.type === 'MB' && p.prom) {
+    addSlide(d, -1); addSlide(d, 1);
+    addStep(-d, -1); addStep(-d, 1);
+    return moves;
+  }
+  // 盾 (SH): only forward diagonals (1 step). Special: cannot be captured from directly in front.
+  if (p.type === 'SH' && !p.prom) {
+    addStep(d, -1); addStep(d, 1);
+    return moves;
+  }
+  // 盾成 (promoted SH): forward diagonals + 1-step backward
+  if (p.type === 'SH' && p.prom) {
+    addStep(d, -1); addStep(d, 1);
+    addStep(-d, 0);
+    return moves;
+  }
+
+  // Promoted small pieces move like gold
+  const isGoldLike = (p.type === 'G' && !p.prom) ||
+    (p.prom && (p.type === 'S' || p.type === 'Nk' || p.type === 'L' || p.type === 'P'));
+
+  if (isGoldLike) {
+    for (const [dr,dc] of goldSteps(owner)) addStep(dr, dc);
+    return moves;
+  }
+
+  switch (p.type) {
+    case 'K':
+      for (const [dr,dc] of [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]]) addStep(dr,dc);
+      break;
+    case 'R':
+      for (const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]) addSlide(dr,dc);
+      if (p.prom) for (const [dr,dc] of [[-1,-1],[-1,1],[1,-1],[1,1]]) addStep(dr,dc);
+      break;
+    case 'B':
+      for (const [dr,dc] of [[-1,-1],[-1,1],[1,-1],[1,1]]) addSlide(dr,dc);
+      if (p.prom) for (const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]) addStep(dr,dc);
+      break;
+    case 'S':
+      for (const [dr,dc] of [[d,-1],[d,0],[d,1],[-d,-1],[-d,1]]) addStep(dr,dc);
+      break;
+    case 'Nk':
+      for (const [dr,dc] of [[2*d,-1],[2*d,1]]) addStep(dr,dc);
+      break;
+    case 'L':
+      addSlide(d, 0);
+      break;
+    case 'P':
+      addStep(d, 0);
+      break;
+  }
+  return moves;
+}
+
+// ============ Promotion logic ============
+function inPromotionZone(owner, row) {
+  return owner === SENTE ? row <= 2 : row >= 6;
+}
+function canPromote(piece, fromRow, toRow) {
+  if (piece.prom) return false;
+  // Standard pieces that never promote
+  if (piece.type === 'K') {
+    if (piece.owner !== SENTE || !shop.owned.king_promote) return false;
+  }
+  if (piece.type === 'G') {
+    if (piece.owner !== SENTE || !shop.owned.gold_promote) return false;
+  }
+  if (piece.type === 'D') {
+    if (piece.owner !== SENTE || !shop.owned.general_promote) return false;
+  }
+  return inPromotionZone(piece.owner, fromRow) || inPromotionZone(piece.owner, toRow);
+}
+function mustPromote(piece, toRow) {
+  if (piece.prom) return false;
+  const o = piece.owner;
+  if (piece.type === 'P' || piece.type === 'L') {
+    return o === SENTE ? toRow === 0 : toRow === 8;
+  }
+  if (piece.type === 'Nk') {
+    return o === SENTE ? toRow <= 1 : toRow >= 7;
+  }
+  return false;
+}
+
+// ============ Drops ============
+function legalDropSquares(type, owner, b) {
+  const sqs = [];
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      if (b[r][c]) continue;
+      // Forced-no-move restrictions
+      if (type === 'P' || type === 'L' || type === 'SH') {
+        if (owner === SENTE && r === 0) continue;
+        if (owner === GOTE && r === 8) continue;
+      }
+      if (type === 'Nk') {
+        if (owner === SENTE && r <= 1) continue;
+        if (owner === GOTE && r >= 7) continue;
+      }
+      // Nifu: no two unpromoted pawns in same column
+      if (type === 'P') {
+        let dup = false;
+        for (let rr = 0; rr < N; rr++) {
+          const q = b[rr][c];
+          if (q && q.type === 'P' && q.owner === owner && !q.prom) { dup = true; break; }
+        }
+        if (dup) continue;
+      }
+      sqs.push([r, c]);
+    }
+  }
+  return sqs;
+}
+
+// ============ Check / Legal filter ============
+function findKing(owner, b) {
+  for (let r = 0; r < N; r++)
+    for (let c = 0; c < N; c++) {
+      const p = b[r][c];
+      if (p && p.type === 'K' && p.owner === owner) return [r, c];
+    }
+  return null;
+}
+
+function isAttacked(r, c, byOwner, b) {
+  for (let i = 0; i < N; i++)
+    for (let j = 0; j < N; j++) {
+      const p = b[i][j];
+      if (!p || p.owner !== byOwner) continue;
+      const moves = pieceMoves(i, j, b);
+      for (const [mr, mc] of moves) if (mr === r && mc === c) return true;
+    }
+  return false;
+}
+
+function inCheck(owner, b) {
+  const k = findKing(owner, b);
+  if (!k) return false;
+  return isAttacked(k[0], k[1], 1 - owner, b);
+}
+
+// Apply a move (returns captured info for undo). Move format:
+// { fromR, fromC, toR, toC, promote: bool } -- board move
+// { drop: type, toR, toC, owner } -- drop
+function applyMove(m, b, cap) {
+  if (m.drop) {
+    b[m.toR][m.toC] = { type: m.drop, owner: m.owner, prom: false };
+    cap[m.owner][m.drop] = (cap[m.owner][m.drop] || 0) - 1;
+    if (cap[m.owner][m.drop] <= 0) delete cap[m.owner][m.drop];
+    return null;
+  } else {
+    const p = b[m.fromR][m.fromC];
+    const captured = b[m.toR][m.toC];
+    b[m.toR][m.toC] = { type: p.type, owner: p.owner, prom: p.prom || !!m.promote };
+    b[m.fromR][m.fromC] = null;
+    if (captured) {
+      // Captured pieces lose promotion and switch sides
+      const t = captured.type;
+      cap[p.owner][t] = (cap[p.owner][t] || 0) + 1;
+    }
+    return captured;
+  }
+}
+
+function undoMove(m, b, cap, capturedPiece, originalProm) {
+  if (m.drop) {
+    b[m.toR][m.toC] = null;
+    cap[m.owner][m.drop] = (cap[m.owner][m.drop] || 0) + 1;
+  } else {
+    const p = b[m.toR][m.toC];
+    b[m.fromR][m.fromC] = { type: p.type, owner: p.owner, prom: originalProm };
+    b[m.toR][m.toC] = capturedPiece || null;
+    if (capturedPiece) {
+      const t = capturedPiece.type;
+      cap[p.owner][t] = (cap[p.owner][t] || 0) - 1;
+      if (cap[p.owner][t] <= 0) delete cap[p.owner][t];
+    }
+  }
+}
+
+// Generate all legal moves for a player (filtered for own-king-in-check)
+function generateAllLegalMoves(owner, b, cap) {
+  const result = [];
+  // Board moves
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      const p = b[r][c];
+      if (!p || p.owner !== owner) continue;
+      const moves = pieceMoves(r, c, b);
+      for (const [tr, tc] of moves) {
+        // Check if move would result in unmovable piece without promotion
+        const pieceCanPromote = canPromote(p, r, tr);
+        const forced = mustPromote(p, tr);
+        const promoteOptions = forced ? [true] :
+                               pieceCanPromote ? [false, true] : [false];
+        for (const prom of promoteOptions) {
+          const m = { fromR: r, fromC: c, toR: tr, toC: tc, promote: prom };
+          const origProm = p.prom;
+          const cap0 = applyMove(m, b, cap);
+          if (!inCheck(owner, b)) result.push(m);
+          undoMove(m, b, cap, cap0, origProm);
+        }
+      }
+    }
+  }
+  // Drops
+  for (const t of Object.keys(cap[owner])) {
+    if ((cap[owner][t] || 0) <= 0) continue;
+    const sqs = legalDropSquares(t, owner, b);
+    for (const [r, c] of sqs) {
+      const m = { drop: t, toR: r, toC: c, owner };
+      applyMove(m, b, cap);
+      const ok = !inCheck(owner, b);
+      undoMove(m, b, cap, null, false);
+      if (ok) result.push(m);
+    }
+  }
+  return result;
+}
+
+// ============ Move execution from UI ============
+function tryMove(fromR, fromC, toR, toC) {
+  const p = board[fromR][fromC];
+  if (!p) return;
+  const forced = mustPromote(p, toR);
+  const canProm = canPromote(p, fromR, toR);
+
+  if (canProm && !forced) {
+    // Ask user
+    pendingPromotion = { fromR, fromC, toR, toC };
+    showModal('modalPromote');
+    return;
+  }
+  doMove({ fromR, fromC, toR, toC, promote: forced });
+}
+
+function doMove(m) {
+  applyMove(m, board, captured);
+  lastMove = m.drop ? { drop: m.drop, toR: m.toR, toC: m.toC }
+                    : { fromR: m.fromR, fromC: m.fromC, toR: m.toR, toC: m.toC };
+  selected = null;
+  legalDestinations = [];
+
+  // Switch turn
+  turn = 1 - turn;
+
+  // Track recent position for sennichite avoidance (bounded)
+  positionHistory.push(hashPos(board, captured, turn));
+  if (positionHistory.length > 30) positionHistory.shift();
+
+  // Check end of game
+  const moves = generateAllLegalMoves(turn, board, captured);
+  if (moves.length === 0) {
+    gameOver = true;
+    const checked = inCheck(turn, board);
+    const winner = 1 - turn;
+    render();
+    setTimeout(() => endGame(winner, checked ? '詰み' : '手詰まり'), 200);
+    return;
+  }
+  render();
+
+  // Status text
+  if (inCheck(turn, board)) {
+    setStatus(`${turn === SENTE ? '先手' : '後手'} 王手！`, 'warn');
+  } else if (mode === 'aivsai') {
+    setStatus(`${turn === SENTE ? '先手' : '後手'}AI（Lv.${aiLevels[turn]}）思考中…`);
+  } else if (mode === 'ai') {
+    setStatus(turn === SENTE ? '先手の番' : `AI（Lv.${aiLevels[GOTE]}）思考中…`);
+  } else {
+    setStatus(turn === SENTE ? '先手の番' : '後手の番');
+  }
+
+  // Schedule next AI move
+  if (!gameOver) {
+    const tk = gameToken;
+    if (mode === 'aivsai') {
+      setTimeout(() => aiMove(turn, tk), 400);
+    } else if (mode === 'ai' && turn === GOTE) {
+      setTimeout(() => aiMove(GOTE, tk), 300);
+    }
+  }
+}
+
+function tryDrop(type, toR, toC) {
+  // Check legality
+  const sqs = legalDropSquares(type, turn, board);
+  if (!sqs.some(([r, c]) => r === toR && c === toC)) return;
+  // Simulate to ensure it doesn't leave king in check
+  const m = { drop: type, toR, toC, owner: turn };
+  applyMove(m, board, captured);
+  if (inCheck(turn, board)) {
+    undoMove(m, board, captured, null, false);
+    setStatus('その手では王手放置になります', 'warn');
+    return;
+  }
+  undoMove(m, board, captured, null, false);
+  doMove(m);
+}
+
+// ============ Game-end ============
+function endGame(winner, reason) {
+  gameOver = true;
+  document.getElementById('endText').textContent =
+    `${winner === SENTE ? '先手' : '後手'} の勝利 ・ ${reason}`;
+  showModal('modalEnd');
+}
+
+// ============ AI ============
+// Evaluation. evalLevel: 1=material, 2=+positional, 3=+king safety/pressure,
+//   4=+囲い(美濃/矢倉)・機動力(疑似)・駒の利き(ヒモ/タダ取り検出)・盤面攻防カウント
+// pda: 0..3 attack/defense slider. 0 = pure defensive, 3 = aggressive.
+// boost: optional multiplier for the strong (lvl 3+/4) terms (used by Lv19/20).
+function evaluate(b, cap, evalLevel, pda, boost) {
+  if (pda === undefined) pda = 1;
+  if (!boost) boost = 1;
+  const advW       = [0.7, 1.0, 1.4, 1.9][pda];
+  const safetyW    = [1.5, 1.0, 0.7, 0.45][pda] * boost;
+  const pressureW  = [0.3, 0.85, 1.4, 2.0][pda] * boost;
+  const handW      = [1.0, 1.0, 1.05, 1.10][pda];
+
+  let score = 0;
+  let kSente = null, kGote = null;
+  // Material on board
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      const p = b[r][c];
+      if (!p) continue;
+      if (p.type === 'K') { if (p.owner === SENTE) kSente = [r, c]; else kGote = [r, c]; }
+      const v = p.prom && PROM_VALUES[p.type] ? PROM_VALUES[p.type] : VALUES[p.type];
+      const sign = p.owner === GOTE ? 1 : -1;
+      score += sign * v;
+      if (evalLevel >= 2 && p.type !== 'K') {
+        const advance = p.owner === GOTE ? r : (8 - r); // 0..8
+        let advWeight;
+        if (p.type === 'P')      advWeight = 0.20;
+        else if (p.type === 'L') advWeight = 0.16;
+        else if (p.type === 'Nk')advWeight = 0.14;
+        else if (p.type === 'S') advWeight = 0.11;
+        else if (p.type === 'G') advWeight = 0.07;
+        else if (p.type === 'D' || p.type === 'MR' || p.type === 'MB' || p.type === 'SH') advWeight = 0.10;
+        else                     advWeight = 0.06;  // R, B
+        score += sign * advance * advWeight * advW;
+        const centerDist = Math.abs(c - 4);
+        score += sign * (4 - centerDist) * 0.025;
+      }
+    }
+  }
+  // Pieces in hand
+  for (const t in cap[GOTE])  score += (cap[GOTE][t]  || 0) * VALUES[t] * 0.9 * handW;
+  for (const t in cap[SENTE]) score -= (cap[SENTE][t] || 0) * VALUES[t] * 0.9 * handW;
+
+  if (evalLevel >= 3) {
+    // Own king safety (defenders + advance penalty)
+    for (const owner of [SENTE, GOTE]) {
+      const k = owner === SENTE ? kSente : kGote;
+      if (!k) continue;
+      const sign = owner === GOTE ? 1 : -1;
+      // 金銀を主防御駒として加点。歩・桂・香は弱い防御。総量は 3 で頭打ち。
+      let defenders = 0;
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          const nr = k[0] + dr, nc = k[1] + dc;
+          if (!inBounds(nr, nc)) continue;
+          const np = b[nr][nc];
+          if (!np || np.owner !== owner) continue;
+          if (np.type === 'G') defenders += 1.0;
+          else if (np.type === 'S') defenders += 0.9;
+          else if (np.prom && (np.type === 'S' || np.type === 'Nk' || np.type === 'L' || np.type === 'P')) defenders += 0.7;
+          else if (np.type === 'P' || np.type === 'L') defenders += 0.25;
+          else defenders += 0.4;
+        }
+      }
+      defenders = Math.min(defenders, 3.0);
+      score += sign * defenders * 0.45 * safetyW;
+      // 玉が前に出るほど大幅マイナス（二乗で罰）— 序盤の居玉脱出を強く抑止
+      const kingAdv = owner === SENTE ? (8 - k[0]) : k[0];
+      score -= sign * (kingAdv * 0.85 + kingAdv * kingAdv * 0.55) * safetyW;
+    }
+    // Enemy-king pressure: own pieces around enemy king
+    if (kGote) {
+      let pressure = 0;
+      for (let dr = -2; dr <= 2; dr++) {
+        for (let dc = -2; dc <= 2; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          const nr = kGote[0] + dr, nc = kGote[1] + dc;
+          if (!inBounds(nr, nc)) continue;
+          const np = b[nr][nc];
+          if (np && np.owner === SENTE && np.type !== 'K') {
+            const closeness = 3 - Math.max(Math.abs(dr), Math.abs(dc));
+            pressure += closeness;
+          }
+        }
+      }
+      score -= pressure * 0.22 * pressureW;
+    }
+    if (kSente) {
+      let pressure = 0;
+      for (let dr = -2; dr <= 2; dr++) {
+        for (let dc = -2; dc <= 2; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          const nr = kSente[0] + dr, nc = kSente[1] + dc;
+          if (!inBounds(nr, nc)) continue;
+          const np = b[nr][nc];
+          if (np && np.owner === GOTE && np.type !== 'K') {
+            const closeness = 3 - Math.max(Math.abs(dr), Math.abs(dc));
+            pressure += closeness;
+          }
+        }
+      }
+      score += pressure * 0.22 * pressureW;
+    }
+  }
+
+  // ========= Lv4 評価項目（強化エンジン専用） =========
+  if (evalLevel >= 4) {
+    score += evalStrong(b, cap, kSente, kGote, advW, safetyW, pressureW, boost);
+  }
+  return score;
+}
+
+// 強化エンジン用追加評価。盤面を 1 度だけスキャンし、
+// 利き / ヒモ / 囲い / 機動力近似 / 飛車先 / 浮き駒 を一括算出。
+function evalStrong(b, cap, kSente, kGote, advW, safetyW, pressureW, boost) {
+  // 利きマップ（各マスへの SENTE / GOTE の利き数）
+  // attackers[owner][r*9+c] = number of attackers
+  const aS = new Int8Array(81);
+  const aG = new Int8Array(81);
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      const p = b[r][c];
+      if (!p) continue;
+      const arr = p.owner === SENTE ? aS : aG;
+      const moves = pieceMoves(r, c, b);
+      for (const [tr, tc] of moves) arr[tr * 9 + tc]++;
+    }
+  }
+
+  let s = 0;
+  // 1) ヒモ・浮き駒（hanging）— 自陣の駒で、敵の利き > 自分の利き なら危険。
+  //    厳密な SEE ではないが、低コストで強い指標。
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      const p = b[r][c];
+      if (!p || p.type === 'K') continue;
+      const idx = r * 9 + c;
+      const attackers = p.owner === SENTE ? aG[idx] : aS[idx];
+      const defenders = p.owner === SENTE ? aS[idx] : aG[idx];
+      if (attackers === 0) continue;
+      const v = p.prom && PROM_VALUES[p.type] ? PROM_VALUES[p.type] : VALUES[p.type];
+      const sign = p.owner === GOTE ? 1 : -1;
+      if (defenders === 0) {
+        // 完全な浮き駒 — タダ取られの危険
+        s -= sign * v * 0.40 * boost;
+      } else if (attackers > defenders) {
+        // 利き負けしている — 駆け引きで損する可能性大
+        s -= sign * v * 0.18 * boost;
+      } else {
+        // ヒモ付き — わずかにプラス
+        s += sign * v * 0.02;
+      }
+    }
+  }
+
+  // 2) 機動力近似（合計利きマス数の差）— 終盤で特に効く。
+  let mobS = 0, mobG = 0;
+  for (let i = 0; i < 81; i++) { mobS += aS[i]; mobG += aG[i]; }
+  s += (mobG - mobS) * 0.025 * boost;
+
+  // 3) 玉ゾーン制圧（玉の周囲 5x5 マスへの敵利きと自利きの差）
+  function zoneControl(k, ownAtk, enemyAtk) {
+    if (!k) return 0;
+    let own = 0, en = 0;
+    for (let dr = -2; dr <= 2; dr++) {
+      for (let dc = -2; dc <= 2; dc++) {
+        const nr = k[0] + dr, nc = k[1] + dc;
+        if (!inBounds(nr, nc)) continue;
+        const w = (Math.max(Math.abs(dr), Math.abs(dc)) === 1) ? 2 : 1;
+        own += ownAtk[nr * 9 + nc] * w;
+        en  += enemyAtk[nr * 9 + nc] * w;
+      }
+    }
+    return en - own; // 敵利きが多いほど危険
+  }
+  const senteDanger = zoneControl(kSente, aS, aG); // 先手玉が受けている圧力
+  const goteDanger  = zoneControl(kGote,  aG, aS); // 後手玉が受けている圧力
+  // GOTE 視点（プラスが GOTE 有利）：先手玉が危険なほどプラス
+  s += senteDanger * 0.16 * pressureW;
+  s -= goteDanger  * 0.16 * pressureW;
+
+  // 4) 囲い評価（金銀の連結 + 玉のサイド寄り）
+  //    金銀が玉の隣接 8 マス内に近接しているほど高評価（簡易な美濃/矢倉/穴熊判定）
+  function castleScore(k, owner) {
+    if (!k) return 0;
+    let pts = 0;
+    for (let dr = -2; dr <= 2; dr++) {
+      for (let dc = -2; dc <= 2; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        const nr = k[0] + dr, nc = k[1] + dc;
+        if (!inBounds(nr, nc)) continue;
+        const np = b[nr][nc];
+        if (!np || np.owner !== owner) continue;
+        const cheb = Math.max(Math.abs(dr), Math.abs(dc));
+        let w = 0;
+        if (np.type === 'G') w = (cheb === 1 ? 0.55 : 0.20);
+        else if (np.type === 'S') w = (cheb === 1 ? 0.45 : 0.18);
+        else if (np.type === 'Nk') w = (cheb === 1 ? 0.18 : 0.08);
+        else if (np.type === 'P' && cheb === 1) w = 0.08;
+        else if (np.type === 'L' && cheb === 1) w = 0.10;
+        if (np.prom && (np.type === 'S' || np.type === 'Nk' || np.type === 'L' || np.type === 'P')) w *= 0.85; // 成銀等は守備力やや低下
+        pts += w;
+      }
+    }
+    // 玉が端に寄っているほど（穴熊・美濃形）+ボーナス
+    const fileFromEdge = Math.min(k[1], 8 - k[1]); // 0=端
+    pts += (2 - Math.min(2, fileFromEdge)) * 0.22;
+    // 自陣に深く居るほど安全（成り込みされにくい） — 段階的に強い罰
+    // 0=最奥 / 1 段上がる毎に二乗で罰則。序盤で玉ふらつきを強く抑止
+    const homeRow = (owner === SENTE) ? (8 - k[0]) : k[0];
+    pts -= homeRow * homeRow * 0.35 + homeRow * 0.20;
+    return pts;
+  }
+  const castS = castleScore(kSente, SENTE);
+  const castG = castleScore(kGote,  GOTE);
+  s -= castS * 0.55 * safetyW; // 先手の囲いが固いほど GOTE 視点で不利 → マイナス
+  s += castG * 0.55 * safetyW;
+
+  // 5) 飛車・角の働き（前方 / 斜め前方の空きマス数 = 利き範囲）
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      const p = b[r][c];
+      if (!p) continue;
+      const sign = p.owner === GOTE ? 1 : -1;
+      let mob = 0;
+      if (p.type === 'R') {
+        // 4 方向の利きマス数
+        for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+          let nr = r + dr, nc = c + dc;
+          while (inBounds(nr, nc)) { mob++; if (b[nr][nc]) break; nr += dr; nc += dc; }
+        }
+        s += sign * mob * 0.06 * boost;
+      } else if (p.type === 'B') {
+        for (const [dr, dc] of [[-1,-1],[-1,1],[1,-1],[1,1]]) {
+          let nr = r + dr, nc = c + dc;
+          while (inBounds(nr, nc)) { mob++; if (b[nr][nc]) break; nr += dr; nc += dc; }
+        }
+        s += sign * mob * 0.07 * boost;
+      }
+    }
+  }
+
+  // 6) 持ち駒の質（飛・角を持っているとプレッシャー大）
+  const heavyG = (cap[GOTE]['R']  || 0) * 0.6 + (cap[GOTE]['B']  || 0) * 0.5 + (cap[GOTE]['G']  || 0) * 0.25;
+  const heavyS = (cap[SENTE]['R'] || 0) * 0.6 + (cap[SENTE]['B'] || 0) * 0.5 + (cap[SENTE]['G'] || 0) * 0.25;
+  s += (heavyG - heavyS) * boost;
+
+  return s;
+}
+
+function moveScore(m) {
+  // For move ordering at search time
+  let s = 0;
+  if (!m.drop) {
+    const cap = board[m.toR][m.toC];
+    if (cap) s += (cap.prom && PROM_VALUES[cap.type] ? PROM_VALUES[cap.type] : VALUES[cap.type]) * 10;
+    if (m.promote) s += 4;
+  }
+  return s;
+}
+
+// Fast captures-only generator (no check filter — relied on king-value to bail).
+function generateCapturesPseudo(side, b) {
+  const result = [];
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      const p = b[r][c];
+      if (!p || p.owner !== side) continue;
+      const moves = pieceMoves(r, c, b);
+      for (const [tr, tc] of moves) {
+        if (!b[tr][tc]) continue;
+        const forced = mustPromote(p, tr);
+        const canProm = canPromote(p, r, tr);
+        if (forced) {
+          result.push({ fromR:r, fromC:c, toR:tr, toC:tc, promote:true });
+        } else if (canProm) {
+          result.push({ fromR:r, fromC:c, toR:tr, toC:tc, promote:true });
+        } else {
+          result.push({ fromR:r, fromC:c, toR:tr, toC:tc, promote:false });
+        }
+      }
+    }
+  }
+  return result;
+}
+
+// 王手かどうかを安全に判定（手を一時適用して相手の玉が攻撃下にあるか）
+function moveGivesCheck(m, mover, b, cap) {
+  const fp = m.drop ? null : b[m.fromR][m.fromC];
+  const op = fp ? fp.prom : false;
+  const cap0 = applyMove(m, b, cap);
+  const checked = inCheck(1 - mover, b);
+  undoMove(m, b, cap, cap0, op);
+  return checked;
+}
+
+// 王手を生成 — 既存の合法手から「相手玉に王手をかける手」だけ抽出
+function generateChecks(side, b, cap) {
+  const all = generateAllLegalMoves(side, b, cap);
+  const out = [];
+  for (const m of all) if (moveGivesCheck(m, side, b, cap)) out.push(m);
+  return out;
+}
+
+// Quiescence: 取り合い + 王手回避/王手応酬まで読む
+// 高コストな eval-4 を全ノードで呼ぶと爆発するため、qLight が真なら eval-3 を使う。
+// qcheck は最初の 1〜2 手だけ王手を含める（深いほど通常モードへ）。
+function quiescence(alpha, beta, side, cfg, depthLeft) {
+  if (cfg._deadline && (cfg._qNodes = (cfg._qNodes || 0) + 1) % 256 === 0 && Date.now() > cfg._deadline) {
+    cfg._abort = true; return 0;
+  }
+  // 軽量評価モード — 静止探索では一段下げて高速化
+  const useEval = cfg.qLight !== false ? Math.min(cfg.eval, 3) : cfg.eval;
+
+  const inChk = inCheck(side, board);
+  const standPat = inChk ? null : evaluate(board, captured, useEval, cfg.pda, cfg.evalBoost);
+  if (!inChk) {
+    if (depthLeft <= 0) return standPat;
+    if (side === GOTE) {
+      if (standPat >= beta) return beta;
+      if (standPat > alpha) alpha = standPat;
+    } else {
+      if (standPat <= alpha) return alpha;
+      if (standPat < beta) beta = standPat;
+    }
+  } else {
+    if (depthLeft <= 0) depthLeft = 1;
+  }
+
+  let moves;
+  if (inChk) {
+    moves = generateAllLegalMoves(side, board, captured);
+    if (moves.length === 0) return side === GOTE ? -99000 : 99000;
+  } else {
+    moves = generateCapturesPseudo(side, board);
+    // qcheck: 最初の 2 手だけ王手生成を許す（爆発防止）
+    const qd = cfg.qdepth || 4;
+    if (cfg.qcheck && depthLeft >= qd - 1) {
+      const checks = generateChecks(side, board, captured);
+      const seen = new Set(moves.map(m => m.drop
+        ? `D${m.drop}@${m.toR},${m.toC}`
+        : `${m.fromR},${m.fromC}>${m.toR},${m.toC}${m.promote?'+':''}`));
+      for (const m of checks) {
+        const k = m.drop
+          ? `D${m.drop}@${m.toR},${m.toC}`
+          : `${m.fromR},${m.fromC}>${m.toR},${m.toC}${m.promote?'+':''}`;
+        if (!seen.has(k)) { seen.add(k); moves.push(m); }
+      }
+    }
+  }
+  moves.sort((a, b) => moveScore(b) - moveScore(a));
+  for (const m of moves) {
+    const fromPiece = m.drop ? null : board[m.fromR][m.fromC];
+    const origProm = fromPiece ? fromPiece.prom : false;
+    const cap0 = applyMove(m, board, captured);
+    const val = quiescence(alpha, beta, 1 - side, cfg, depthLeft - 1);
+    undoMove(m, board, captured, cap0, origProm);
+    if (cfg._abort) return 0;
+    if (side === GOTE) {
+      if (val >= beta) return beta;
+      if (val > alpha) alpha = val;
+    } else {
+      if (val <= alpha) return alpha;
+      if (val < beta) beta = val;
+    }
+  }
+  return side === GOTE ? alpha : beta;
+}
+
+// Move-equality helper for PV-move ordering.
+function moveEq(a, b) {
+  if (!a || !b) return false;
+  if (a.drop && b.drop) return a.drop === b.drop && a.toR === b.toR && a.toC === b.toC;
+  if (!a.drop && !b.drop) {
+    return a.fromR === b.fromR && a.fromC === b.fromC && a.toR === b.toR && a.toC === b.toC && !!a.promote === !!b.promote;
+  }
+  return false;
+}
+
+// 履歴ヒューリスティック / キラームーブの一意キー
+function moveKey(m) {
+  if (m.drop) return 'D' + m.drop + ',' + m.toR + ',' + m.toC;
+  return (m.fromR * 9 + m.fromC) + '>' + (m.toR * 9 + m.toC) + (m.promote ? '+' : '');
+}
+
+// Negamax-style minimax with alpha-beta + PVS + LMR + killer/history.
+// side=GOTE maximizes (AI), SENTE minimizes. ply: distance from root.
+function search(depth, alpha, beta, side, cfg, ply) {
+  if (ply === undefined) ply = 0;
+  if (cfg._deadline && (cfg._nodes & 1023) === 0 && Date.now() > cfg._deadline) { cfg._abort = true; return 0; }
+  cfg._nodes = (cfg._nodes || 0) + 1;
+  const alphaOrig = alpha, betaOrig = beta;
+
+  // 王手延長：王手中なら +1 手深く読む（最大延長 ply 数を抑制）
+  const checked = inCheck(side, board);
+  if (checked && ply < (cfg.maxExt || 8)) depth += 1;
+
+  // Transposition table probe
+  let h = null;
+  let ttBest = null;
+  if (cfg.useTT) {
+    h = hashPos(board, captured, side);
+    const ent = TT.get(h);
+    if (ent) {
+      ttBest = ent.best || null;
+      if (ent.depth >= depth) {
+        if (ent.flag === 'exact') return ent.val;
+        if (ent.flag === 'lower' && ent.val > alpha) alpha = ent.val;
+        else if (ent.flag === 'upper' && ent.val < beta) beta = ent.val;
+        if (alpha >= beta) return ent.val;
+      }
+    }
+  }
+
+  if (depth <= 0) {
+    return cfg.quiesce
+      ? quiescence(alpha, beta, side, cfg, cfg.qdepth || 4)
+      : evaluate(board, captured, cfg.eval, cfg.pda, cfg.evalBoost);
+  }
+  const moves = generateAllLegalMoves(side, board, captured);
+  if (moves.length === 0) {
+    return checked
+      ? (side === GOTE ? -99999 + ply : 99999 - ply)
+      : 0;
+  }
+  // Adaptive throttle — Lv 高めでは緩和
+  const aggro = cfg.depth >= 8;
+  if (!aggro) {
+    if (depth >= 3 && moves.length > 90) depth = Math.max(2, depth - 1);
+    else if (depth >= 4 && moves.length > 70) depth = Math.max(3, depth - 1);
+    else if (depth >= 2 && moves.length > 110) depth = 1;
+  } else {
+    // 強レベル：最低限の節度 — 極端な分岐数のときだけ -1
+    if (depth >= 6 && moves.length > 130) depth -= 1;
+  }
+
+  // Move ordering: TT best → captures/promotions → killer → history → others
+  const killers = cfg._killers ? (cfg._killers[ply] || null) : null;
+  const histMap = cfg._history || null;
+  const ordKey = (m) => {
+    let s = 0;
+    if (ttBest && moveEq(m, ttBest)) s += 1e7;
+    if (!m.drop) {
+      const tgt = board[m.toR][m.toC];
+      if (tgt) s += 1e6 + (tgt.prom && PROM_VALUES[tgt.type] ? PROM_VALUES[tgt.type] : VALUES[tgt.type]) * 100;
+      if (m.promote) s += 5e3;
+    }
+    if (killers) {
+      if (killers[0] && moveEq(m, killers[0])) s += 5e5;
+      else if (killers[1] && moveEq(m, killers[1])) s += 4e5;
+    }
+    if (histMap) s += (histMap.get(moveKey(m)) || 0);
+    return s;
+  };
+  moves.sort((a, b) => ordKey(b) - ordKey(a));
+
+  let best = side === GOTE ? -Infinity : Infinity;
+  let bestMv = null;
+  let searchedCount = 0;
+
+  for (const m of moves) {
+    const isCapture = !m.drop && !!board[m.toR][m.toC];
+    const isPromote = !!m.promote;
+    const fromPiece = m.drop ? null : board[m.fromR][m.fromC];
+    const origProm = fromPiece ? fromPiece.prom : false;
+    const cap0 = applyMove(m, board, captured);
+
+    // Late Move Reduction: 取らない・成らない・PV外の手は浅く読む
+    let reduce = 0;
+    if (cfg.lmr && depth >= 3 && searchedCount >= 4 && !isCapture && !isPromote && !checked) {
+      reduce = (searchedCount >= 10) ? 2 : 1;
+      if (depth - 1 - reduce < 1) reduce = depth - 2;
+    }
+
+    let val;
+    if (cfg.pvs && searchedCount > 0) {
+      // PVS: null window 探索
+      if (side === GOTE) {
+        val = search(depth - 1 - reduce, alpha, alpha + 1, 1 - side, cfg, ply + 1);
+        if (!cfg._abort && reduce > 0 && val > alpha) {
+          // LMR で探索した結果アルファを上回ったら、フル深度で再探索
+          val = search(depth - 1, alpha, alpha + 1, 1 - side, cfg, ply + 1);
+        }
+        if (!cfg._abort && val > alpha && val < beta) {
+          val = search(depth - 1, alpha, beta, 1 - side, cfg, ply + 1);
+        }
+      } else {
+        val = search(depth - 1 - reduce, beta - 1, beta, 1 - side, cfg, ply + 1);
+        if (!cfg._abort && reduce > 0 && val < beta) {
+          val = search(depth - 1, beta - 1, beta, 1 - side, cfg, ply + 1);
+        }
+        if (!cfg._abort && val > alpha && val < beta) {
+          val = search(depth - 1, alpha, beta, 1 - side, cfg, ply + 1);
+        }
+      }
+    } else {
+      if (reduce > 0) {
+        val = search(depth - 1 - reduce, alpha, beta, 1 - side, cfg, ply + 1);
+        if (!cfg._abort) {
+          const raised = side === GOTE ? (val > alpha) : (val < beta);
+          if (raised) val = search(depth - 1, alpha, beta, 1 - side, cfg, ply + 1);
+        }
+      } else {
+        val = search(depth - 1, alpha, beta, 1 - side, cfg, ply + 1);
+      }
+    }
+
+    undoMove(m, board, captured, cap0, origProm);
+    if (cfg._abort) return 0;
+    searchedCount++;
+
+    if (side === GOTE) {
+      if (val > best) { best = val; bestMv = m; }
+      if (best > alpha) alpha = best;
+    } else {
+      if (val < best) { best = val; bestMv = m; }
+      if (best < beta) beta = best;
+    }
+    if (alpha >= beta) {
+      // ベータ・カット — killer / history を更新（取り合いでない手のみ）
+      if (!isCapture && !isPromote) {
+        if (cfg._killers) {
+          const slot = cfg._killers[ply] = cfg._killers[ply] || [null, null];
+          if (!slot[0] || !moveEq(slot[0], m)) { slot[1] = slot[0]; slot[0] = m; }
+        }
+        if (cfg._history) {
+          const k = moveKey(m);
+          cfg._history.set(k, (cfg._history.get(k) || 0) + depth * depth);
+        }
+      }
+      break;
+    }
+  }
+
+  // TT store
+  if (cfg.useTT && h !== null && !cfg._abort) {
+    let flag = 'exact';
+    if (best <= alphaOrig) flag = 'upper';
+    else if (best >= betaOrig) flag = 'lower';
+    TT.set(h, { depth, val: best, flag, best: bestMv });
+    if (TT.size > 200000) TT.clear();
+  }
+  return best;
+}
+
+// Score moves at depth 0 — used by levels 1 & 2 for capture-aware "no-search" play.
+function shallowScore(m) {
+  if (m.drop) {
+    // Drops are mostly neutral; small bonus for deeper drops (attacking).
+    return 0;
+  }
+  const target = board[m.toR][m.toC];
+  let s = 0;
+  if (target) {
+    s += (target.prom && PROM_VALUES[target.type] ? PROM_VALUES[target.type] : VALUES[target.type]) * 10;
+  }
+  if (m.promote) s += 3;
+  return s;
+}
+
+// 簡易定跡：Lv16+ の序盤数手で、人間プロが好む基本筋に寄せる
+// 居飛車・矢倉/美濃寄せの安全な指し方を優先する。
+function pickFromOpeningBook(side, b, cap, legalMoves) {
+  // 序盤の典型手筋テンプレート（先手視点の盤面座標 [row,col]）
+  // 配列 col 0 = 9筋, col 8 = 1筋。row 6 = 七段目（先手歩の初期段）
+  // 先手の初期駒：銀=col2,col6 / 金=col3,col5 / 王=col4 / 飛=col7 / 角=col1
+  const senteBook = [
+    // 7六歩  P (6,2) → (5,2)
+    { from:[6,2], to:[5,2], w:6 },
+    // 2六歩  P (6,7) → (5,7)
+    { from:[6,7], to:[5,7], w:6 },
+    // 6八銀  S (8,2) → (7,3)
+    { from:[8,2], to:[7,3], w:3 },
+    // 4八銀  S (8,6) → (7,5)
+    { from:[8,6], to:[7,5], w:3 },
+    // 7八金  G (8,3) → (7,2)
+    { from:[8,3], to:[7,2], w:4 },
+    // 3八金  G (8,5) → (7,6)
+    { from:[8,5], to:[7,6], w:3 },
+    // 6八玉  K (8,4) → (8,3)
+    { from:[8,4], to:[8,3], w:2 },
+    // 5八金右  G (8,5) → (7,4)
+    { from:[8,5], to:[7,4], w:2 },
+    // 2五歩  P (5,7) → (4,7)
+    { from:[5,7], to:[4,7], w:4 },
+    // 6六歩  P (6,3) → (5,3)
+    { from:[6,3], to:[5,3], w:4 },
+    // 3六歩  P (6,6) → (5,6)
+    { from:[6,6], to:[5,6], w:3 },
+    // 4六歩  P (6,5) → (5,5)
+    { from:[6,5], to:[5,5], w:2 },
+    // 7七銀  S (8,2) → (7,2) を経由する代替ルート（角道止め）
+    { from:[8,2], to:[7,2], w:2 },
+    // 3八銀  S (8,6) → (7,6)
+    { from:[8,6], to:[7,6], w:2 },
+  ];
+
+  // 後手視点では行を 8-r で反転、列はミラー（飛車・角の左右配置を尊重）
+  function mirrorBook() {
+    return senteBook.map(e => ({
+      from: [8 - e.from[0], 8 - e.from[1]],
+      to:   [8 - e.to[0],   8 - e.to[1]],
+      w: e.w,
+    }));
+  }
+  const book = side === SENTE ? senteBook : mirrorBook();
+
+  // 候補：定跡に登録された出発マスの駒が残っていて、目的マスへ動く合法手があるか
+  const candidates = [];
+  for (const e of book) {
+    const p = b[e.from[0]][e.from[1]];
+    if (!p || p.owner !== side) continue;
+    // 王手中はブックを使わない
+    if (inCheck(side, b)) return null;
+    const m = legalMoves.find(mv => !mv.drop &&
+      mv.fromR === e.from[0] && mv.fromC === e.from[1] &&
+      mv.toR === e.to[0]   && mv.toC === e.to[1]   && !mv.promote);
+    if (m) candidates.push({ m, w: e.w });
+  }
+  if (candidates.length === 0) return null;
+  // 重み付きランダム
+  let total = 0; for (const c of candidates) total += c.w;
+  let r = Math.random() * total;
+  for (const c of candidates) { r -= c.w; if (r <= 0) return c.m; }
+  return candidates[0].m;
+}
+
+function aiMove(side, token) {
+  if (gameOver) return;
+  if (token !== undefined && token !== gameToken) return; // stale timer from previous game
+  if (typeof side !== 'number') side = GOTE;
+  const level = aiLevels[side];
+  const baseCfg = LEVEL_CONFIG[level];
+  const moves = generateAllLegalMoves(side, board, captured);
+  if (moves.length === 0) {
+    const checked = inCheck(side, board);
+    render();
+    endGame(1 - side, checked ? '詰み' : '手詰まり');
+    return;
+  }
+
+  // Build runtime cfg with PDA
+  const cfg = Object.assign({}, baseCfg, { pda: aiPDA[side] });
+  // Killer/history テーブルを今回の探索専用に確保
+  if (cfg.killer)  cfg._killers = [];
+  if (cfg.history) cfg._history = new Map();
+  cfg._nodes = 0;
+
+  // Adaptive throttle for shop-piece-heavy positions (lots of legal moves).
+  // 高レベル(>=10) は時間制限主導なので節度を緩める
+  const br = moves.length;
+  if (level < 10) {
+    if (cfg.depth >= 5 && br > 60)       cfg.depth = 4;
+    if (cfg.depth >= 4 && br > 90)       cfg.depth = 3;
+    if (cfg.depth >= 3 && br > 110)      cfg.depth = 2;
+    if (cfg.depth >= 2 && br > 130)      cfg.depth = 1;
+    if (br > 90 && cfg.qdepth) cfg.qdepth = Math.min(cfg.qdepth, 4);
+  } else {
+    // Lv10+: 反復深化＋時間で抑制するので深さは大きく削らない
+    if (cfg.depth >= 10 && br > 140) cfg.depth = 9;
+    if (cfg.depth >= 12 && br > 110) cfg.depth = 11;
+    if (br > 140 && cfg.qdepth) cfg.qdepth = Math.min(cfg.qdepth, 8);
+  }
+
+  const opponent = 1 - side;
+
+  // ===== 定跡（簡易ブック）— Lv16 以降のみ使用 =====
+  // 序盤の数手だけ、定跡から外れない手を選ぶ
+  // 取り合い発生・王手中・成り駒がある等、序盤の整然とした局面で無くなったら使わない
+  function bookConditionsOk() {
+    if (Object.keys(captured[SENTE]).length || Object.keys(captured[GOTE]).length) return false;
+    if (inCheck(side, board)) return false;
+    // 成った駒が盤上に 1 つでもある = 中盤以降と判断
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      const p = board[r][c];
+      if (p && p.prom) return false;
+    }
+    return true;
+  }
+  if (cfg.openingBook && positionHistory.length <= 10 && bookConditionsOk()) {
+    const bookMv = pickFromOpeningBook(side, board, captured, moves);
+    if (bookMv) { doMove(bookMv); return; }
+  }
+
+  // Repetition / move-result helpers
+  function leadsToRepeat(m) {
+    const fp = m.drop ? null : board[m.fromR][m.fromC];
+    const op = fp ? fp.prom : false;
+    const cap0 = applyMove(m, board, captured);
+    const h = hashPos(board, captured, opponent);
+    undoMove(m, board, captured, cap0, op);
+    for (const old of positionHistory) if (old === h) return true;
+    return false;
+  }
+  function avoidRepeats(list) {
+    if (positionHistory.length === 0) return list;
+    const fresh = list.filter(m => !leadsToRepeat(m));
+    return fresh.length > 0 ? fresh : list;
+  }
+  function repeatPenalty(after_h) {
+    let n = 0; for (const h of positionHistory) if (h === after_h) n++;
+    if (n === 0) return 0;
+    const base = 6 + n * 8;
+    return side === SENTE ? +base : -base;
+  }
+
+  // Score a single move at a given depth using current cfg.
+  // Returns score AFTER the move (in the same +gote/-sente convention).
+  function scoreMove(m, depth) {
+    const fp = m.drop ? null : board[m.fromR][m.fromC];
+    const op = fp ? fp.prom : false;
+    const cap0 = applyMove(m, board, captured);
+    let val;
+    if (depth <= 1) {
+      val = cfg.quiesce
+        ? quiescence(-Infinity, Infinity, opponent, cfg, cfg.qdepth || 4)
+        : evaluate(board, captured, cfg.eval, cfg.pda, cfg.evalBoost);
+    } else {
+      val = search(depth - 1, -Infinity, Infinity, opponent, cfg, 1);
+    }
+    val += repeatPenalty(hashPos(board, captured, opponent));
+    undoMove(m, board, captured, cap0, op);
+    return val;
+  }
+
+  // === Routing per level ===
+  let chosen;
+
+  // Level 0 — anti-AI: depth-1 search, pick the WORST move for self (best for opponent).
+  if (cfg.antiAI) {
+    const scored = moves.map(m => ({ m, val: scoreMove(m, 1) }));
+    // For sente (SENTE wants low val) → anti = pick HIGH val.
+    // For gote (GOTE wants high val) → anti = pick LOW val.
+    if (side === SENTE) scored.sort((a, b) => b.val - a.val);
+    else                scored.sort((a, b) => a.val - b.val);
+    chosen = scored[0].m;
+  }
+  // Lv 1: pure random (with sennichite avoidance).
+  else if (cfg.depth === 0 && cfg.randomness >= 1.0) {
+    const pool = avoidRepeats(moves);
+    chosen = pool[Math.floor(Math.random() * pool.length)];
+  }
+  // Lv 2: capture if free, else random-ish.
+  else if (cfg.depth === 0) {
+    const scored = moves.map(m => ({ m, s: shallowScore(m) }));
+    const best = Math.max(...scored.map(x => x.s));
+    if (best > 0 && Math.random() > cfg.randomness) {
+      const top = avoidRepeats(scored.filter(x => x.s === best).map(x => x.m));
+      chosen = top[Math.floor(Math.random() * top.length)];
+    } else {
+      const pool = avoidRepeats(moves);
+      chosen = pool[Math.floor(Math.random() * pool.length)];
+    }
+  }
+  // Levels 3+: real search. Iterative deepening if cfg.iterDeep, else fixed depth.
+  else if (cfg.iterDeep) {
+    cfg._deadline = Date.now() + (cfg.timeMs || 3000);
+    cfg._abort = false;
+    let bestMove = null;
+    let bestScored = null;
+    let prevBestVal = 0;
+    moves.sort((a, b) => moveScore(b) - moveScore(a));
+    for (let d = 1; d <= cfg.depth; d++) {
+      // Move ordering: previous best first.
+      const ordered = bestMove ? [bestMove, ...moves.filter(m => m !== bestMove)] : moves;
+      const scored = [];
+      let aborted = false;
+      for (const m of ordered) {
+        const val = scoreMove(m, d);
+        if (cfg._abort) { aborted = true; break; }
+        scored.push({ m, val });
+        // 詰みを発見したら即終了（GOTE側にとって +99000 以上 / SENTE側にとって -99000 以下）
+        const matFound = (side === GOTE && val > 90000) || (side === SENTE && val < -90000);
+        if (matFound) {
+          // 残りも軽く評価して順位付けに使う
+          for (const mm of ordered) if (mm !== m && !scored.some(x => x.m === mm)) scored.push({ m: mm, val: side === GOTE ? -1e9 : 1e9 });
+          break;
+        }
+      }
+      if (aborted) break;
+      if (side === GOTE) scored.sort((a, b) => b.val - a.val);
+      else               scored.sort((a, b) => a.val - b.val);
+      bestScored = scored;
+      bestMove = scored[0].m;
+      prevBestVal = scored[0].val;
+      // 確実な詰みを掴んだなら反復深化を打ち切る
+      if (Math.abs(prevBestVal) > 90000) break;
+      // 残り時間が少なければ次の反復に入らない（深い反復は時間爆発）
+      const remain = cfg._deadline - Date.now();
+      if (remain < (cfg.timeMs || 3000) * 0.18) break;
+    }
+    if (!bestScored) {
+      const scored = moves.map(m => ({ m, val: scoreMove(m, 1) }));
+      if (side === GOTE) scored.sort((a, b) => b.val - a.val);
+      else                scored.sort((a, b) => a.val - b.val);
+      bestScored = scored;
+    }
+    const bestVal = bestScored[0].val;
+    const tied = bestScored.filter(x => Math.abs(x.val - bestVal) < 0.001).map(x => x.m);
+    chosen = tied[Math.floor(Math.random() * tied.length)];
+  }
+  else {
+    // Fixed-depth search
+    moves.sort((a, b) => moveScore(b) - moveScore(a));
+    const scored = moves.map(m => ({ m, val: scoreMove(m, cfg.depth) }));
+    if (side === GOTE) scored.sort((a, b) => b.val - a.val);
+    else                scored.sort((a, b) => a.val - b.val);
+
+    if (cfg.randomness > 0 && Math.random() < cfg.randomness) {
+      const top = scored.slice(0, Math.max(2, Math.ceil(scored.length / 3)));
+      chosen = top[Math.floor(Math.random() * top.length)].m;
+    } else {
+      const bestVal = scored[0].val;
+      const tied = scored.filter(x => Math.abs(x.val - bestVal) < 0.001).map(x => x.m);
+      chosen = tied[Math.floor(Math.random() * tied.length)];
+    }
+  }
+  doMove(chosen);
+}
+
+// ============ Rendering ============
+function pieceLabel(p) {
+  if (p.prom && KANJI[p.type].prom) return KANJI[p.type].prom;
+  if (p.type === 'K' && p.owner === SENTE) return KANJI.K.alt; // 王 for sente convention
+  return KANJI[p.type].norm;
+}
+
+function render() {
+  // Board
+  const boardEl = document.getElementById('board');
+  boardEl.innerHTML = '';
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.r = r; cell.dataset.c = c;
+
+      // Highlight last move
+      if (lastMove) {
+        if (lastMove.drop && lastMove.toR === r && lastMove.toC === c) cell.classList.add('last-move');
+        else if (!lastMove.drop && ((lastMove.fromR === r && lastMove.fromC === c) || (lastMove.toR === r && lastMove.toC === c))) cell.classList.add('last-move');
+      }
+      // Highlight selected
+      if (selected && selected.kind === 'board' && selected.r === r && selected.c === c) cell.classList.add('selected');
+      // Highlight legal destinations
+      if (legalDestinations.some(([lr, lc]) => lr === r && lc === c)) {
+        cell.classList.add('legal');
+        if (board[r][c]) cell.classList.add('capture');
+      }
+
+      const p = board[r][c];
+      if (p) {
+        const div = document.createElement('div');
+        div.className = 'piece' + (p.owner === GOTE ? ' gote' : '') + (p.prom ? ' promoted' : '');
+        const lab = document.createElement('span');
+        lab.className = 'label';
+        lab.textContent = pieceLabel(p);
+        div.appendChild(lab);
+        cell.appendChild(div);
+
+        // Highlight king in check
+        if (p.type === 'K' && p.owner === turn && !gameOver && inCheck(turn, board))
+          cell.classList.add('check');
+      }
+
+      cell.addEventListener('click', onCellClick);
+      boardEl.appendChild(cell);
+    }
+  }
+
+  renderKomadai(SENTE);
+  renderKomadai(GOTE);
+
+  // Turn indicator
+  const tb = document.getElementById('turnBadge');
+  tb.textContent = turn === SENTE ? '先手番' : '後手番';
+  tb.classList.add('active');
+}
+
+function renderKomadai(owner) {
+  const el = document.getElementById(owner === SENTE ? 'komadaiSente' : 'komadaiGote');
+  // Remove all but label
+  [...el.querySelectorAll('.captured-piece')].forEach(n => n.remove());
+  const cap = captured[owner];
+  for (const t of ORDER) {
+    if (!cap[t]) continue;
+    const wrap = document.createElement('div');
+    wrap.className = 'captured-piece';
+    if (selected && selected.kind === 'drop' && selected.type === t && selected.owner === owner) {
+      wrap.classList.add('selected');
+    }
+    wrap.dataset.type = t;
+    wrap.dataset.owner = owner;
+    const piece = document.createElement('div');
+    piece.style.cssText = 'display:inline';
+    piece.textContent = KANJI[t].norm;
+    const cnt = document.createElement('span');
+    cnt.className = 'count';
+    cnt.textContent = '×' + cap[t];
+    wrap.appendChild(piece);
+    wrap.appendChild(cnt);
+    wrap.addEventListener('click', onCapturedClick);
+    el.appendChild(wrap);
+  }
+}
+
+function setStatus(msg, cls) {
+  const s = document.getElementById('status');
+  s.textContent = msg;
+  s.className = 'status' + (cls ? ' ' + cls : '');
+}
+
+// ============ Click handlers ============
+function onCellClick(e) {
+  if (gameOver) return;
+  if (mode === 'aivsai') return;             // AI対AI: input ignored
+  if (mode === 'ai' && turn === GOTE) return; // not your turn
+  const r = +e.currentTarget.dataset.r;
+  const c = +e.currentTarget.dataset.c;
+  const p = board[r][c];
+
+  // Already selected something: try to act
+  if (selected) {
+    if (selected.kind === 'board') {
+      // Tap own piece again -> reselect or deselect
+      if (p && p.owner === turn) {
+        if (selected.r === r && selected.c === c) {
+          // deselect
+          selected = null; legalDestinations = []; render();
+          return;
+        }
+        // switch selection
+        selectPieceOnBoard(r, c);
+        return;
+      }
+      // Try to move to clicked cell
+      if (legalDestinations.some(([lr, lc]) => lr === r && lc === c)) {
+        tryMove(selected.r, selected.c, r, c);
+        return;
+      }
+      // Else deselect
+      selected = null; legalDestinations = []; render();
+      return;
+    }
+    if (selected.kind === 'drop') {
+      // Try drop
+      if (legalDestinations.some(([lr, lc]) => lr === r && lc === c)) {
+        tryDrop(selected.type, r, c);
+        return;
+      }
+      selected = null; legalDestinations = []; render();
+      return;
+    }
+  }
+
+  // Nothing selected: select if own piece
+  if (p && p.owner === turn) selectPieceOnBoard(r, c);
+}
+
+function selectPieceOnBoard(r, c) {
+  selected = { kind: 'board', r, c };
+  // Compute legal destinations (filter check)
+  const raw = pieceMoves(r, c, board);
+  const filtered = [];
+  const piece = board[r][c];
+  for (const [tr, tc] of raw) {
+    // Try without promotion (or forced)
+    const forced = mustPromote(piece, tr);
+    const m = { fromR: r, fromC: c, toR: tr, toC: tc, promote: forced };
+    const origProm = piece.prom;
+    const cap0 = applyMove(m, board, captured);
+    const ok = !inCheck(turn, board);
+    undoMove(m, board, captured, cap0, origProm);
+    if (ok) filtered.push([tr, tc]);
+  }
+  legalDestinations = filtered;
+  render();
+}
+
+function onCapturedClick(e) {
+  if (gameOver) return;
+  if (mode === 'aivsai') return;
+  if (mode === 'ai' && turn === GOTE) return;
+  const t = e.currentTarget.dataset.type;
+  const o = +e.currentTarget.dataset.owner;
+  if (o !== turn) return; // can't drop opponent's pieces
+
+  if (selected && selected.kind === 'drop' && selected.type === t && selected.owner === o) {
+    selected = null; legalDestinations = []; render(); return;
+  }
+  selected = { kind: 'drop', type: t, owner: o };
+  const sqs = legalDropSquares(t, o, board);
+  // Filter for not-leave-king-in-check
+  const filtered = [];
+  for (const [r, c] of sqs) {
+    const m = { drop: t, toR: r, toC: c, owner: o };
+    applyMove(m, board, captured);
+    if (!inCheck(o, board)) filtered.push([r, c]);
+    undoMove(m, board, captured, null, false);
+  }
+  legalDestinations = filtered;
+  render();
+}
+
+// ============ Modals ============
+function showModal(id) { document.getElementById(id).classList.add('show'); }
+function hideModal(id) { document.getElementById(id).classList.remove('show'); }
+
+// New-game modal: mode toggle + level sliders
+let chosenMode = 'human';
+const modeButtons = document.querySelectorAll('#modalNew .toggle');
+const senteSec = document.getElementById('senteLevelSection');
+const goteSec = document.getElementById('goteLevelSection');
+const goteLabel = document.getElementById('goteLevelLabel');
+
+function applyModeUI() {
+  if (chosenMode === 'human') {
+    senteSec.classList.add('hidden');
+    goteSec.classList.add('hidden');
+  } else if (chosenMode === 'ai') {
+    senteSec.classList.add('hidden');
+    goteSec.classList.remove('hidden');
+    goteLabel.textContent = 'AI レベル';
+  } else if (chosenMode === 'aivsai') {
+    senteSec.classList.remove('hidden');
+    goteSec.classList.remove('hidden');
+    goteLabel.textContent = '後手 AI';
+  }
+}
+
+modeButtons.forEach(b => {
+  b.addEventListener('click', () => {
+    modeButtons.forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    chosenMode = b.dataset.mode;
+    applyModeUI();
+  });
+});
+
+function makeSliderBinding(sliderId, numId, nameId, sideIndex) {
+  const slider = document.getElementById(sliderId);
+  const update = () => {
+    const v = +slider.value;
+    document.getElementById(numId).textContent = v;
+    document.getElementById(nameId).textContent = LEVEL_NAMES[v];
+    aiLevels[sideIndex] = v;
+  };
+  slider.addEventListener('input', update);
+  update();
+}
+makeSliderBinding('senteLevelSlider', 'senteLevelNum', 'senteLevelName', SENTE);
+makeSliderBinding('goteLevelSlider',  'goteLevelNum',  'goteLevelName',  GOTE);
+
+function makePdaBinding(containerId, sideIndex) {
+  const container = document.getElementById(containerId);
+  const buttons = container.querySelectorAll('.pda-btn');
+  buttons.forEach(b => {
+    b.addEventListener('click', () => {
+      buttons.forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      aiPDA[sideIndex] = +b.dataset.pda;
+    });
+  });
+}
+makePdaBinding('sentePdaButtons', SENTE);
+makePdaBinding('gotePdaButtons',  GOTE);
+
+document.getElementById('startGameBtn').addEventListener('click', () => {
+  hideModal('modalNew');
+  newGame(chosenMode);
+});
+
+// ============ Shop ============
+function buildShopUI() {
+  const sections = [
+    {
+      title: '駒の能力強化',
+      keys: ['king_promote', 'gold_promote'],
+    },
+    {
+      title: '初期から成り状態',
+      keys: ['start_pawn_prom', 'start_bishop_prom', 'start_rook_prom', 'start_gold_prom', 'start_king_prom'],
+    },
+    {
+      title: '駒の追加',
+      keys: ['general'],
+      extra: 'rooks',
+    },
+    {
+      title: '大将の能力',
+      keys: ['general_promote', 'start_general_prom'],
+    },
+    {
+      title: '新駒（小型・特殊）',
+      keys: ['mini_rook', 'mini_bishop', 'shield'],
+    },
+  ];
+  const body = document.getElementById('shopBody');
+  body.innerHTML = '';
+  for (const section of sections) {
+    const sec = document.createElement('div');
+    sec.className = 'shop-section';
+    const title = document.createElement('div');
+    title.className = 'section-title';
+    title.textContent = '▸ ' + section.title;
+    sec.appendChild(title);
+
+    if (section.extra === 'rooks') {
+      // Rook counter row (placed at top of "駒の追加" section)
+      const row = document.createElement('div');
+      row.className = 'shop-item';
+      row.innerHTML = `
+        <div class="info">
+          <div class="name">手持ちに飛車を追加</div>
+          <div class="desc">対局開始時に持駒の飛車を増やす（¥${ROOK_PRICE.toLocaleString()}/個）</div>
+        </div>
+        <div class="right">
+          <div class="counter">
+            <button id="rookMinus" type="button">−</button>
+            <span class="count" id="rookCount">0</span>
+            <button id="rookPlus" type="button">＋</button>
+          </div>
+        </div>`;
+      sec.appendChild(row);
+    }
+
+    for (const key of section.keys) {
+      const item = SHOP_ITEMS[key];
+      const row = document.createElement('div');
+      row.className = 'shop-item';
+      row.dataset.key = key;
+      row.innerHTML = `
+        <div class="info">
+          <div class="name">${item.name}</div>
+          <div class="desc">${item.desc}</div>
+        </div>
+        <div class="right">
+          <div class="price">¥${item.price.toLocaleString()}</div>
+          <button class="buy-btn" type="button">購入</button>
+        </div>`;
+      row.querySelector('.buy-btn').addEventListener('click', () => buyItem(key));
+      sec.appendChild(row);
+    }
+
+    body.appendChild(sec);
+  }
+  // Rook counter handlers
+  const rp = document.getElementById('rookPlus');
+  const rm = document.getElementById('rookMinus');
+  if (rp) rp.addEventListener('click', () => { if (shop.budget >= ROOK_PRICE) { shop.budget -= ROOK_PRICE; shop.extraRooks++; renderShop(); } });
+  if (rm) rm.addEventListener('click', () => { if (shop.extraRooks > 0) { shop.budget += ROOK_PRICE; shop.extraRooks--; renderShop(); } });
+}
+
+function renderShop() {
+  // Balance displays
+  const fmt = shop.budget.toLocaleString();
+  document.getElementById('shopBalance').textContent = fmt;
+  document.getElementById('newGameBalance').textContent = fmt;
+
+  // Rook counter
+  const rc = document.getElementById('rookCount');
+  if (rc) rc.textContent = shop.extraRooks;
+  const rm = document.getElementById('rookMinus');
+  const rp = document.getElementById('rookPlus');
+  if (rm) rm.disabled = shop.extraRooks <= 0;
+  if (rp) rp.disabled = shop.budget < ROOK_PRICE;
+
+  // Each item
+  for (const key of Object.keys(SHOP_ITEMS)) {
+    const item = SHOP_ITEMS[key];
+    const el = document.querySelector(`.shop-item[data-key="${key}"]`);
+    if (!el) continue;
+    const owned = !!shop.owned[key];
+    const locked = item.req && !shop.owned[item.req];
+    el.classList.toggle('owned', owned);
+    el.classList.toggle('locked', locked);
+    const btn = el.querySelector('.buy-btn');
+    if (owned) {
+      btn.textContent = '購入済';
+      btn.disabled = true;
+    } else if (locked) {
+      btn.textContent = '未解放';
+      btn.disabled = true;
+    } else if (shop.budget < item.price) {
+      btn.textContent = '残高不足';
+      btn.disabled = true;
+    } else {
+      btn.textContent = '購入';
+      btn.disabled = false;
+    }
+  }
+}
+
+function buyItem(key) {
+  const item = SHOP_ITEMS[key];
+  if (!item || shop.owned[key]) return;
+  if (item.req && !shop.owned[item.req]) return;
+  if (shop.budget < item.price) return;
+  shop.budget -= item.price;
+  shop.owned[key] = true;
+  renderShop();
+}
+
+function resetShop() {
+  shop.budget = 100000;
+  shop.owned = {};
+  shop.extraRooks = 0;
+  renderShop();
+}
+
+document.getElementById('openShopBtn').addEventListener('click', () => {
+  showModal('modalShop');
+  renderShop();
+});
+document.getElementById('shopClose').addEventListener('click', () => hideModal('modalShop'));
+document.getElementById('shopReset').addEventListener('click', resetShop);
+
+buildShopUI();
+renderShop();
+
+document.querySelectorAll('#modalPromote .btn').forEach(b => {
+  b.addEventListener('click', () => {
+    hideModal('modalPromote');
+    if (!pendingPromotion) return;
+    const m = { ...pendingPromotion, promote: b.dataset.promote === 'yes' };
+    pendingPromotion = null;
+    doMove(m);
+  });
+});
+
+document.getElementById('menuBtn').addEventListener('click', () => showModal('modalMenu'));
+document.getElementById('menuClose').addEventListener('click', () => hideModal('modalMenu'));
+document.getElementById('menuNew').addEventListener('click', () => {
+  hideModal('modalMenu');
+  showModal('modalNew');
+});
+document.getElementById('endNew').addEventListener('click', () => {
+  hideModal('modalEnd');
+  showModal('modalNew');
+});
+
+// initial render placeholder
+board = initBoard();
+captured = [{}, {}];
+turn = SENTE;
+mode = 'human';
+gameOver = true;
+render();
+setStatus('対局を開始してください');
+</script>
+</body>
+</html>
