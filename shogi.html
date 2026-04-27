@@ -837,20 +837,20 @@ const LEVEL_CONFIG = {
   7:  { depth: 2, randomness: 0.0,  eval: 3 },
   8:  { depth: 2, randomness: 0.0,  eval: 3, quiesce: true,  qdepth: 2 },
   9:  { depth: 2, randomness: 0.0,  eval: 3, quiesce: true,  qdepth: 4 },
-  // ===== Lv10 以降は強化版エンジン =====
-  // qdepth は静止探索の深さ。大きすぎると爆発するので 4〜6 を現実的な上限に。
-  // qcheck は王手応酬を読むが計算量が大きいので Lv17+ のみ、しかも軽量制限付き。
-  10: { depth: 4, randomness: 0.0, eval: 4, quiesce: true, qdepth: 4, iterDeep: true, timeMs: 2500,  useTT: true, killer: true, history: true },
-  11: { depth: 5, randomness: 0.0, eval: 4, quiesce: true, qdepth: 4, iterDeep: true, timeMs: 3500,  useTT: true, killer: true, history: true, lmr: true },
-  12: { depth: 5, randomness: 0.0, eval: 4, quiesce: true, qdepth: 5, iterDeep: true, timeMs: 5000,  useTT: true, killer: true, history: true, lmr: true, pvs: true },
-  13: { depth: 6, randomness: 0.0, eval: 4, quiesce: true, qdepth: 5, iterDeep: true, timeMs: 7000,  useTT: true, killer: true, history: true, lmr: true, pvs: true },
-  14: { depth: 6, randomness: 0.0, eval: 4, quiesce: true, qdepth: 6, iterDeep: true, timeMs: 10000, useTT: true, killer: true, history: true, lmr: true, pvs: true },
-  15: { depth: 7, randomness: 0.0, eval: 4, quiesce: true, qdepth: 6, iterDeep: true, timeMs: 14000, useTT: true, killer: true, history: true, lmr: true, pvs: true },
-  16: { depth: 7, randomness: 0.0, eval: 4, quiesce: true, qdepth: 6, iterDeep: true, timeMs: 18000, useTT: true, killer: true, history: true, lmr: true, pvs: true, openingBook: true },
-  17: { depth: 8, randomness: 0.0, eval: 4, quiesce: true, qdepth: 6, iterDeep: true, timeMs: 25000, useTT: true, killer: true, history: true, lmr: true, pvs: true, openingBook: true, qcheck: true },
-  18: { depth: 8, randomness: 0.0, eval: 4, quiesce: true, qdepth: 7, iterDeep: true, timeMs: 35000, useTT: true, killer: true, history: true, lmr: true, pvs: true, openingBook: true, qcheck: true, evalBoost: 1.05 },
-  19: { depth: 9, randomness: 0.0, eval: 4, quiesce: true, qdepth: 7, iterDeep: true, timeMs: 50000, useTT: true, killer: true, history: true, lmr: true, pvs: true, openingBook: true, qcheck: true, evalBoost: 1.10 },
-  20: { depth:10, randomness: 0.0, eval: 4, quiesce: true, qdepth: 8, iterDeep: true, timeMs: 75000, useTT: true, killer: true, history: true, lmr: true, pvs: true, openingBook: true, qcheck: true, evalBoost: 1.15 },
+  // ===== Lv10 以降はターボ強化エンジン =====
+  // NMP/RFP/LMP/LMR/PVS/MVV-LVA を全段で適用し、短時間で深く読む構成。
+  // 1 手最大 15 秒以内を上限に揃え、Lv が上がるほど機能と eval boost で強くする。
+  10: { depth: 5, randomness: 0.0, eval: 4, quiesce: true, qdepth: 4, iterDeep: true, timeMs: 2000,  useTT: true, killer: true, history: true, lmr: true, pvs: true, nmp: true, rfp: true, lmp: true },
+  11: { depth: 6, randomness: 0.0, eval: 4, quiesce: true, qdepth: 4, iterDeep: true, timeMs: 3000,  useTT: true, killer: true, history: true, lmr: true, pvs: true, nmp: true, rfp: true, lmp: true },
+  12: { depth: 7, randomness: 0.0, eval: 4, quiesce: true, qdepth: 5, iterDeep: true, timeMs: 4000,  useTT: true, killer: true, history: true, lmr: true, pvs: true, nmp: true, rfp: true, lmp: true },
+  13: { depth: 7, randomness: 0.0, eval: 4, quiesce: true, qdepth: 5, iterDeep: true, timeMs: 5500,  useTT: true, killer: true, history: true, lmr: true, pvs: true, nmp: true, rfp: true, lmp: true },
+  14: { depth: 8, randomness: 0.0, eval: 4, quiesce: true, qdepth: 6, iterDeep: true, timeMs: 7000,  useTT: true, killer: true, history: true, lmr: true, pvs: true, nmp: true, rfp: true, lmp: true },
+  15: { depth: 9, randomness: 0.0, eval: 4, quiesce: true, qdepth: 6, iterDeep: true, timeMs: 8500,  useTT: true, killer: true, history: true, lmr: true, pvs: true, nmp: true, rfp: true, lmp: true },
+  16: { depth: 9, randomness: 0.0, eval: 4, quiesce: true, qdepth: 6, iterDeep: true, timeMs: 10000, useTT: true, killer: true, history: true, lmr: true, pvs: true, nmp: true, rfp: true, lmp: true, openingBook: true },
+  17: { depth:10, randomness: 0.0, eval: 4, quiesce: true, qdepth: 6, iterDeep: true, timeMs: 12000, useTT: true, killer: true, history: true, lmr: true, pvs: true, nmp: true, rfp: true, lmp: true, openingBook: true, qcheck: true },
+  18: { depth:11, randomness: 0.0, eval: 4, quiesce: true, qdepth: 7, iterDeep: true, timeMs: 13000, useTT: true, killer: true, history: true, lmr: true, pvs: true, nmp: true, rfp: true, lmp: true, openingBook: true, qcheck: true, evalBoost: 1.05 },
+  19: { depth:12, randomness: 0.0, eval: 4, quiesce: true, qdepth: 8, iterDeep: true, timeMs: 14000, useTT: true, killer: true, history: true, lmr: true, pvs: true, nmp: true, rfp: true, lmp: true, openingBook: true, qcheck: true, evalBoost: 1.10 },
+  20: { depth:14, randomness: 0.0, eval: 4, quiesce: true, qdepth: 8, iterDeep: true, timeMs: 15000, useTT: true, killer: true, history: true, lmr: true, pvs: true, nmp: true, rfp: true, lmp: true, openingBook: true, qcheck: true, evalBoost: 1.15 },
 };
 // PDA names (攻撃性パラメータ): 0=完全防御 1=均衡(既定) 2=攻撃的 3=決め手志向
 const PDA_NAMES = ['完全防御', '均衡', '攻撃的', '決め手'];
@@ -1744,7 +1744,7 @@ function moveKey(m) {
   return (m.fromR * 9 + m.fromC) + '>' + (m.toR * 9 + m.toC) + (m.promote ? '+' : '');
 }
 
-// Negamax-style minimax with alpha-beta + PVS + LMR + killer/history.
+// Negamax-style minimax with alpha-beta + PVS + LMR + killer/history + NMP/RFP/LMP.
 // side=GOTE maximizes (AI), SENTE minimizes. ply: distance from root.
 function search(depth, alpha, beta, side, cfg, ply) {
   if (ply === undefined) ply = 0;
@@ -1764,7 +1764,7 @@ function search(depth, alpha, beta, side, cfg, ply) {
     const ent = TT.get(h);
     if (ent) {
       ttBest = ent.best || null;
-      if (ent.depth >= depth) {
+      if (ply > 0 && ent.depth >= depth) {
         if (ent.flag === 'exact') return ent.val;
         if (ent.flag === 'lower' && ent.val > alpha) alpha = ent.val;
         else if (ent.flag === 'upper' && ent.val < beta) beta = ent.val;
@@ -1778,6 +1778,48 @@ function search(depth, alpha, beta, side, cfg, ply) {
       ? quiescence(alpha, beta, side, cfg, cfg.qdepth || 4)
       : evaluate(board, captured, cfg.eval, cfg.pda, cfg.evalBoost);
   }
+
+  // ===== Reverse Futility Pruning (RFP) =====
+  // 浅い深さで static eval が既に窓外を大きく超えているなら早期 return。
+  // 評価スケールは 1 駒 = 1〜13 程度。margin は深さに比例。
+  let staticEval = null;
+  if (cfg.rfp !== false && !checked && ply > 0 && depth <= 5
+      && Math.abs(alpha) < 90000 && Math.abs(beta) < 90000) {
+    staticEval = evaluate(board, captured, Math.min(cfg.eval, 3), cfg.pda, cfg.evalBoost);
+    const margin = 1.6 + 1.5 * depth;
+    if (side === GOTE) {
+      if (staticEval - margin >= beta) return staticEval - margin;
+    } else {
+      if (staticEval + margin <= alpha) return staticEval + margin;
+    }
+  }
+
+  // ===== Null Move Pruning (NMP) =====
+  // 自分の手番をスキップして相手に 1 手指させても有利を保てるなら、
+  // この局面は強くプルニング可能。深さ R = 2 + depth/6 で短縮。
+  // 王手中・PV外・浅すぎる深さでは無効。零駒(玉のみ)もスキップ。
+  if (cfg.nmp !== false && !checked && ply > 0 && depth >= 3
+      && Math.abs(beta) < 90000 && Math.abs(alpha) < 90000) {
+    if (staticEval === null) staticEval = evaluate(board, captured, Math.min(cfg.eval, 3), cfg.pda, cfg.evalBoost);
+    const triggerOk = side === GOTE ? (staticEval >= beta) : (staticEval <= alpha);
+    // 自陣に玉以外の駒があるか（zugzwang 回避）
+    let hasMaterial = false;
+    for (let r = 0; r < N && !hasMaterial; r++) {
+      for (let c = 0; c < N; c++) {
+        const p = board[r][c];
+        if (p && p.owner === side && p.type !== 'K') { hasMaterial = true; break; }
+      }
+    }
+    if (triggerOk && hasMaterial) {
+      const R = 2 + Math.floor(depth / 6);
+      // null move = 単に手番を相手に渡す（盤・持駒は変えない）
+      const nullVal = search(depth - 1 - R, alpha, beta, 1 - side, cfg, ply + 1);
+      if (cfg._abort) return 0;
+      if (side === GOTE && nullVal >= beta) return beta;
+      if (side === SENTE && nullVal <= alpha) return alpha;
+    }
+  }
+
   const moves = generateAllLegalMoves(side, board, captured);
   if (moves.length === 0) {
     return checked
@@ -1791,11 +1833,10 @@ function search(depth, alpha, beta, side, cfg, ply) {
     else if (depth >= 4 && moves.length > 70) depth = Math.max(3, depth - 1);
     else if (depth >= 2 && moves.length > 110) depth = 1;
   } else {
-    // 強レベル：最低限の節度 — 極端な分岐数のときだけ -1
     if (depth >= 6 && moves.length > 130) depth -= 1;
   }
 
-  // Move ordering: TT best → captures/promotions → killer → history → others
+  // Move ordering: TT best → captures (MVV-LVA) → promotions → killer → history → others
   const killers = cfg._killers ? (cfg._killers[ply] || null) : null;
   const histMap = cfg._history || null;
   const ordKey = (m) => {
@@ -1803,8 +1844,15 @@ function search(depth, alpha, beta, side, cfg, ply) {
     if (ttBest && moveEq(m, ttBest)) s += 1e7;
     if (!m.drop) {
       const tgt = board[m.toR][m.toC];
-      if (tgt) s += 1e6 + (tgt.prom && PROM_VALUES[tgt.type] ? PROM_VALUES[tgt.type] : VALUES[tgt.type]) * 100;
+      const atk = board[m.fromR][m.fromC];
+      if (tgt) {
+        const tv = tgt.prom && PROM_VALUES[tgt.type] ? PROM_VALUES[tgt.type] : VALUES[tgt.type];
+        const av = atk ? (atk.prom && PROM_VALUES[atk.type] ? PROM_VALUES[atk.type] : VALUES[atk.type]) : 0;
+        s += 1e6 + tv * 100 - av; // MVV-LVA
+      }
       if (m.promote) s += 5e3;
+    } else {
+      s += 50; // 打ち手は中庸
     }
     if (killers) {
       if (killers[0] && moveEq(m, killers[0])) s += 5e5;
@@ -1815,6 +1863,9 @@ function search(depth, alpha, beta, side, cfg, ply) {
   };
   moves.sort((a, b) => ordKey(b) - ordKey(a));
 
+  // LMP の閾値（深さに応じた静かな手の上限）
+  const lmpLimit = depth <= 1 ? 6 : depth <= 2 ? 12 : depth <= 3 ? 22 : 9999;
+
   let best = side === GOTE ? -Infinity : Infinity;
   let bestMv = null;
   let searchedCount = 0;
@@ -1822,24 +1873,35 @@ function search(depth, alpha, beta, side, cfg, ply) {
   for (const m of moves) {
     const isCapture = !m.drop && !!board[m.toR][m.toC];
     const isPromote = !!m.promote;
+    const isQuiet = !isCapture && !isPromote;
+
+    // ===== Late Move Pruning (LMP) =====
+    // 浅い depth で、十分多くの静かな手を見たあとは打ち切る。
+    if (cfg.lmp !== false && !checked && isQuiet && ply > 0
+        && depth <= 3 && searchedCount >= lmpLimit
+        && Math.abs(alpha) < 90000 && Math.abs(beta) < 90000) {
+      continue;
+    }
+
     const fromPiece = m.drop ? null : board[m.fromR][m.fromC];
     const origProm = fromPiece ? fromPiece.prom : false;
     const cap0 = applyMove(m, board, captured);
 
-    // Late Move Reduction: 取らない・成らない・PV外の手は浅く読む
+    // ===== 改良版 LMR (log-based) =====
     let reduce = 0;
-    if (cfg.lmr && depth >= 3 && searchedCount >= 4 && !isCapture && !isPromote && !checked) {
-      reduce = (searchedCount >= 10) ? 2 : 1;
-      if (depth - 1 - reduce < 1) reduce = depth - 2;
+    if (cfg.lmr && depth >= 3 && searchedCount >= 3 && isQuiet && !checked) {
+      // Stockfish 系の対数式を簡略化
+      reduce = Math.floor(0.6 + Math.log(depth) * Math.log(searchedCount + 1) / 1.85);
+      if (reduce < 1) reduce = 1;
+      if (reduce > depth - 2) reduce = depth - 2;
+      if (reduce < 0) reduce = 0;
     }
 
     let val;
     if (cfg.pvs && searchedCount > 0) {
-      // PVS: null window 探索
       if (side === GOTE) {
         val = search(depth - 1 - reduce, alpha, alpha + 1, 1 - side, cfg, ply + 1);
         if (!cfg._abort && reduce > 0 && val > alpha) {
-          // LMR で探索した結果アルファを上回ったら、フル深度で再探索
           val = search(depth - 1, alpha, alpha + 1, 1 - side, cfg, ply + 1);
         }
         if (!cfg._abort && val > alpha && val < beta) {
@@ -1878,7 +1940,6 @@ function search(depth, alpha, beta, side, cfg, ply) {
       if (best < beta) beta = best;
     }
     if (alpha >= beta) {
-      // ベータ・カット — killer / history を更新（取り合いでない手のみ）
       if (!isCapture && !isPromote) {
         if (cfg._killers) {
           const slot = cfg._killers[ply] = cfg._killers[ply] || [null, null];
@@ -1893,7 +1954,6 @@ function search(depth, alpha, beta, side, cfg, ply) {
     }
   }
 
-  // TT store
   if (cfg.useTT && h !== null && !cfg._abort) {
     let flag = 'exact';
     if (best <= alphaOrig) flag = 'upper';
